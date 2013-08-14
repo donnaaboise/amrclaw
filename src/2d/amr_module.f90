@@ -1,9 +1,9 @@
 module amr_module
 
     implicit none
-       
+
     save
-       
+
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ! :::::   data structure info.
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -41,7 +41,7 @@ module amr_module
     integer, parameter :: null = 0
     integer, parameter :: nil  = 0
 
-    ! :::::::  for flagging points   
+    ! :::::::  for flagging points
     real(kind=8), parameter :: goodpt = 0.0
     real(kind=8), parameter :: badpt  = 2.0
     real(kind=8), parameter :: badpro = 3.0
@@ -54,15 +54,15 @@ module amr_module
     integer, parameter :: maxlv = 10
     integer, parameter :: maxcl = 500
 
-    ! The max1d parameter should be changed if using OpenMP grid based 
+    ! The max1d parameter should be changed if using OpenMP grid based
     ! looping, usually set to max1d = 60
-    integer, parameter :: max1d = 60 
+    integer, parameter :: max1d = 36
 
     integer, parameter :: maxvar = 10
     integer, parameter :: maxaux = 20
     integer, parameter :: maxwave = 10
 
-    real(kind=8) hxposs(maxlv), hyposs(maxlv),possk(maxlv),rnode(rsize, maxgr) 
+    real(kind=8) hxposs(maxlv), hyposs(maxlv),possk(maxlv),rnode(rsize, maxgr)
 
 
 
@@ -86,11 +86,11 @@ module amr_module
     ! parameter  (memsize = 10000000)
     ! common  /calloc/   alloc(memsize)
 
-    ! Dynamic memory: 
+    ! Dynamic memory:
     real(kind=8), allocatable, target, dimension(:) :: storage
     real(kind=8), pointer, dimension(:) :: alloc
     integer memsize
-       
+
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\
     ! :::::   for space management of alloc array
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

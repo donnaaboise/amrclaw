@@ -22,9 +22,9 @@ c
              if (xi.lt.0.5d0) then
 c            if (xi.lt.0.5d0 .and. xi.gt.0.1d0 .and. yj.gt.0.1d0 .and.
 c    &           yj.lt.0.3d0) then
-                     q(1,i,j) = 1.d0
-                   else
                      q(1,i,j) = 0.d0
+                   else
+                     q(1,i,j) = 1.d0
                    endif
   20         continue
        return
