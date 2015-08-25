@@ -33,33 +33,28 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.lower[1] = 0          # ylower
     clawdata.upper[1] = 2          # yupper
 
-    clawdata.num_cells[0] = 64      # mx
-    clawdata.num_cells[1] = 64      # my
+    clawdata.num_cells[0] = 512      # mx
+    clawdata.num_cells[1] = 512      # my
 
 
     clawdata.dt_variable = False
-    clawdata.dt_initial = 4e-3
+    clawdata.dt_initial = 5e-4
 
     clawdata.output_style = 3
     # For single grid
-    clawdata.output_step_interval = 250
-    clawdata.total_steps = 2000
-
-    # clawdata.total_steps = 32000
-    # clawdata.output_step_interval = 4000
-    clawdata.verbosity = 0
-
+    clawdata.total_steps = 16000
+    clawdata.output_step_interval = 2000
 
     # ---------------------------
     # AMR parameters (more below)
     # ---------------------------
     amrdata = rundata.amrdata
 
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 1
 
-    amrdata.refinement_ratios_x = [4, 4, 2, 2, 2, 2]
-    amrdata.refinement_ratios_y = [4, 4, 2, 2, 2, 2]
-    amrdata.refinement_ratios_t = [4, 4, 2, 2, 2, 2]
+    amrdata.refinement_ratios_x = [2, 2, 2, 2, 2, 2]
+    amrdata.refinement_ratios_y = [2, 2, 2, 2, 2, 2]
+    amrdata.refinement_ratios_t = [2, 2, 2, 2, 2, 2]
 
     amrdata.flag2refine = True      # use this?
     amrdata.flag2refine_tol = 0.05  # tolerance used in this routine
