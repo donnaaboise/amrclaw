@@ -46,6 +46,7 @@ SOURCES = \
   ./setaux.f \
   ./src2.f \
   ./fdisc.f \
+  ./flag2refine2.f90 \
   $(CLAW)/riemann/src/rpn2_euler_5wave.f90 \
   $(CLAW)/riemann/src/rpt2_euler.f90 \
   $(AMRLIB)/amr2.f90 \
@@ -71,7 +72,6 @@ SOURCES = \
   $(AMRLIB)/colate2.f \
   $(AMRLIB)/bufnst2.f \
   $(AMRLIB)/spest2.f \
-  $(AMRLIB)/flag2refine2.f90 \
   $(AMRLIB)/flagregions2.f90 \
   $(AMRLIB)/errest.f \
   $(AMRLIB)/errf1.f \
