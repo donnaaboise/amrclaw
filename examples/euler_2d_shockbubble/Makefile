@@ -46,7 +46,7 @@ SOURCES = \
   ./setaux.f \
   ./src2.f \
   ./fdisc.f \
-  ./flag2refine2.f90 \
+  ./flag2refine.f90 \
   $(CLAW)/riemann/src/rpn2_euler_5wave.f90 \
   $(CLAW)/riemann/src/rpt2_euler.f90 \
   $(AMRLIB)/amr2.f90 \
