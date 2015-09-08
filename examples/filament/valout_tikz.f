@@ -15,6 +15,7 @@ c
       integer amr_levels_max,mx_coarse,my_coarse
       integer xlow_d, ylow_d,xupper_d, yupper_d
 
+
 c     # Output the results for a general system of conservation laws
 c     # in 2 dimensions
 c
@@ -27,6 +28,8 @@ c     # set outaux = .true. to also output the aux arrays to fort.a<iframe>
       integer output_aux_num
       integer clock_start, clock_finish, clock_rate
       real(kind=8) cpu_start, cpu_finish
+
+      common /comtikz/ figsize
 
 c      iadd(i,j,ivar) = loc + i - 1 + mitot*((ivar-1)*mjtot+j-1)
 c      iaddaux(i,j,ivar) = locaux + i - 1 + mitot*((ivar-1)*mjtot+j-1)
@@ -97,23 +100,23 @@ c        # Figure size
 c        # Figure size in inches (needed for scaling Tikz plot so
 c        # that it is consisent with value set in plotting software
 c        # (Matlab, Python,...)
-         figsize(1) = 4.d0
-         figsize(2) = 4.d0
+c         figsize(1) = 4.d0
+c         figsize(2) = 4.d0
 
-         ax = 0
-         bx = 2.d0
-         ay = 0
-         by = 2d0
-
-         mx_coarse = 64
-         my_coarse = 64
-         amr_levels_max = 3
-
-c        # Refinement values
-         do i = 1,amr_levels_max-1
-            Rx(i) = 4
-            Ry(i) = 4
-         enddo
+c         ax = 0
+c         bx = 2.d0
+c         ay = 0
+c         by = 2d0
+c
+c         mx_coarse = 64
+c         my_coarse = 64
+c         amr_levels_max = 3
+c
+cc        # Refinement values
+c         do i = 1,amr_levels_max-1
+c            Rx(i) = 4
+c            Ry(i) = 4
+c         enddo
 
 c        # --------------------------------------
 c        # From here, everything is good
@@ -152,19 +155,22 @@ c        # From here, everything is good
      &         '% through to higher levels.',/,
      &         '% ',/)
 
-         mxf_global = mx_coarse
-         myf_global = my_coarse
-         do i = 1,amr_levels_max-1
-            mxf_global = mxf_global*Rx(i)
-            myf_global = myf_global*Ry(i)
-         enddo
+c         mxf_global = mx_coarse
+c         myf_global = my_coarse
+c         do i = 1,amr_levels_max-1
+c            mxf_global = mxf_global*Rx(i)
+c            myf_global = myf_global*Ry(i)
+c         enddo
+
+         mxf_global = iregsz(mxnest)
+         myf_global = jregsz(mxnest)
 
          sx = figsize(1)/mxf_global
          sy = figsize(2)/myf_global
 
 c        # Used below
-         dxf = (bx-ax)/mxf_global
-         dyf = (by-ay)/myf_global
+c         dxf = (bx-ax)/mxf_global
+c         dyf = (by-ay)/myf_global
 
          write(matunit5,1010) sx, sy
  1010    format('\begin{tikzpicture}',
@@ -221,7 +227,6 @@ c                 # output in 1d format if ny=1:
      &       i5,'                 AMR_level',/,
      &       i5,'                 mx')
 
-
               xlow = rnode(cornxlo,mptr)
               ylow = rnode(cornylo,mptr)
               if (ny.gt.1) then
@@ -242,17 +247,29 @@ c     # --------------------------
 c     # add tikz entry
 c     # --------------------------
 
-      mxf = nx
-      myf = ny
-      do i = level,amr_levels_max-1
-         mxf = mxf*Rx(i)
-         myf = myf*Ry(i)
+c      mxf = nx
+c      myf = ny
+c      do i = level,amr_levels_max-1
+c         mxf = mxf*Rx(i)
+c         myf = myf*Ry(i)
+c      enddo
+
+c      xlow_d = int((xlow-ax)/dxf)
+c      ylow_d = int((ylow-ay)/dyf)
+c      xupper_d = xlow_d + mxf;
+c      yupper_d = ylow_d + myf;
+
+      ixf = 1
+      iyf = 1
+      do i = level,mxnest-1
+         ixf = ixf*intratx(i)
+         iyf = iyf*intraty(i)
       enddo
 
-      xlow_d = int((xlow-ax)/dxf)
-      ylow_d = int((ylow-ay)/dyf)
-      xupper_d = xlow_d + mxf;
-      yupper_d = ylow_d + myf;
+      xlow_d = ixf*node(ndilo,mptr)
+      xupper_d = ixf*(node(ndihi,mptr) + 1)
+      ylow_d = iyf*node(ndjlo,mptr)
+      yupper_d = iyf*(node(ndjhi,mptr) + 1)
 
 c     # Tikz output
       write(matunit5,1011) mptr,level, xlow_d,ylow_d,xupper_d,
