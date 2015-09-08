@@ -1,6 +1,6 @@
+OutputFlag = 'ascii';  
 OutputDir = '_output';
-OutputFlag = 'forestclaw';         % default value.
-ForestClaw = 1;     % Plot using ForestClaw preferences.
+ForestClaw = 0;     % Plot using ForestClaw preferences.
 
 PlotType = 1;                % type of plot to produce:
 			     % 1 = pseudo-color (pcolor)
@@ -10,10 +10,10 @@ PlotType = 1;                % type of plot to produce:
 
 mq = 1;                      % which component of q to plot
 UserVariable = 0;            % set to 1 to specify a user-defined variable
-UserVariableFile = ' ';      % name of m-file mapping data to q
+UserVariableFile = '';      % name of m-file mapping data to q
 MappedGrid = 0;              % set to 1 if mapc2p.m exists for nonuniform grid
-Manifold = 1;
-ReadBlockNumber = 1;
+Manifold = 0;
+ReadBlockNumber = 0;
 MaxFrames = 1000;            % max number of frames to loop over
 MaxLevels = 30;
 PlotData =  ones(1,MaxLevels);   % Data on refinement level k is plotted only if
