@@ -9,10 +9,6 @@ c
       character*14 fname5
 
       double precision sx, sy, figsize(2)
-      double precision ax,ay,bx,by,dxf,dyf
-      integer mxf_global, myf_global, Rx(20), Ry(20)
-      integer mxf,myf
-      integer amr_levels_max,mx_coarse,my_coarse
       integer xlow_d, ylow_d,xupper_d, yupper_d
 
 
@@ -86,41 +82,6 @@ c        # --------------------------
 c        # Tikz output
 c        # --------------------------
 
-c        # TODO : Replace hardwired value below with dynamic
-c        # values from AMRClaw.
-c        #
-c        # ax,ay,bx,by  (domain)
-c        # amr_levels_max = 7
-c        # R = 2 for all levels
-c        # mx_coarse = num_cells[0]
-c        # my_coarse = num_cells[1]
-c        # Figure size
-
-
-c        # Figure size in inches (needed for scaling Tikz plot so
-c        # that it is consisent with value set in plotting software
-c        # (Matlab, Python,...)
-c         figsize(1) = 4.d0
-c         figsize(2) = 4.d0
-
-c         ax = 0
-c         bx = 2.d0
-c         ay = 0
-c         by = 2d0
-c
-c         mx_coarse = 64
-c         my_coarse = 64
-c         amr_levels_max = 3
-c
-cc        # Refinement values
-c         do i = 1,amr_levels_max-1
-c            Rx(i) = 4
-c            Ry(i) = 4
-c         enddo
-
-c        # --------------------------------------
-c        # From here, everything is good
-
          open(unit=matunit5,file=fname5)
          write(matunit5,1009) matlabu,matlabu,matlabu,
      &         matlabu
@@ -155,22 +116,8 @@ c        # From here, everything is good
      &         '% through to higher levels.',/,
      &         '% ',/)
 
-c         mxf_global = mx_coarse
-c         myf_global = my_coarse
-c         do i = 1,amr_levels_max-1
-c            mxf_global = mxf_global*Rx(i)
-c            myf_global = myf_global*Ry(i)
-c         enddo
-
-         mxf_global = iregsz(mxnest)
-         myf_global = jregsz(mxnest)
-
-         sx = figsize(1)/mxf_global
-         sy = figsize(2)/myf_global
-
-c        # Used below
-c         dxf = (bx-ax)/mxf_global
-c         dyf = (by-ay)/myf_global
+         sx = figsize(1)/iregsz(mxnest)
+         sy = figsize(2)/jregsz(mxnest)
 
          write(matunit5,1010) sx, sy
  1010    format('\begin{tikzpicture}',
@@ -247,18 +194,6 @@ c     # --------------------------
 c     # add tikz entry
 c     # --------------------------
 
-c      mxf = nx
-c      myf = ny
-c      do i = level,amr_levels_max-1
-c         mxf = mxf*Rx(i)
-c         myf = myf*Ry(i)
-c      enddo
-
-c      xlow_d = int((xlow-ax)/dxf)
-c      ylow_d = int((ylow-ay)/dyf)
-c      xupper_d = xlow_d + mxf;
-c      yupper_d = ylow_d + myf;
-
       ixf = 1
       iyf = 1
       do i = level,mxnest-1
@@ -277,10 +212,6 @@ c     # Tikz output
  1011 format('% Patch number ',I8,';   level = ',I3,/,
      &      '    \draw [ultra thin] (',I6,',',I6,') rectangle (',
      &      I8,',',I8,');',/)
-
-
-
-
 
       if (output_format == 1) then
          do j = nghost+1, mjtot-nghost
