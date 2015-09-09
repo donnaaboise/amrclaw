@@ -68,21 +68,6 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.num_cells[0] = 32      # mx
     clawdata.num_cells[1] = 8      # my
 
-    # ---------------
-    # AMR parameters:
-    # ---------------
-    amrdata = rundata.amrdata
-
-    # max number of refinement levels:
-    amrdata.amr_levels_max = 4
-
-    # List of refinement ratios at each level (length at least amr_level_max-1)
-    amrdata.refinement_ratios_x = [4,4,2,2]
-    amrdata.refinement_ratios_y = [4,4,2,2]
-    amrdata.refinement_ratios_t = [4,4,2,2]
-
-    amrdata.flag2refine_tol = 5.000000e-02  # tolerance used in this routine
-
     clawdata.output_style = 1
 
     # Output ntimes frames at equally spaced times up to tfinal:
@@ -92,6 +77,28 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.output_t0 = True  # output at initial (or restart) time?
 
 
+
+    # ---------------
+    # AMR parameters:
+    # ---------------
+    amrdata = rundata.amrdata
+
+    # max number of refinement levels:
+    amrdata.amr_levels_max = 4
+
+    # List of refinement ratios at each level (length at least amr_level_max-1)
+    amrdata.refinement_ratios_x = [4,4,4,2,2,2]
+    amrdata.refinement_ratios_y = [4,4,4,2,2,2]
+    amrdata.refinement_ratios_t = [4,4,4,2,2,2]
+
+    amrdata.flag2refine_tol = 5.00000e-01  # tolerance used in this routine
+
+    # steps to take on each level L between regriddings of level L+1:
+    amrdata.regrid_interval = 1
+
+    # width of buffer zone around flagged points:
+    # (typically the same as regrid_interval so waves don't escape):
+    amrdata.regrid_buffer_width  = 3
 
     # ---------------
     # Size of system:
@@ -310,13 +317,6 @@ def setrun(claw_pkg='amrclaw'):
     # User can modify flag2refine to change the criterion for flagging.
     # Default: check maximum absolute difference of first component of q
     # between a cell and each of its neighbors.
-
-    # steps to take on each level L between regriddings of level L+1:
-    amrdata.regrid_interval = 1
-
-    # width of buffer zone around flagged points:
-    # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 2
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells
     # refined)

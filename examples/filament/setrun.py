@@ -22,6 +22,14 @@ def setrun(claw_pkg='amrclaw'):
     clawdata = rundata.clawdata  # initialized when rundata instantiated
 
 
+    #------------------------------------------------------------------
+    # Problem-specific parameters to be written to setprob.data:
+    #------------------------------------------------------------------
+    probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
+    probdata.add_param('figsize_x',     4.0,  'Figure size in first dim. (inches)')
+    probdata.add_param('figsize_y',     4.0,  'Figure size in second dim. (inches)')
+
+
     # ---------------
     # Spatial domain:
     # ---------------
