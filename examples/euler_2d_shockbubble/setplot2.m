@@ -19,7 +19,7 @@ MappedGrid = 0;              % set to 1 if mapc2p.m exists for nonuniform grid
 Manifold = 0;
 MaxFrames = 1000;            % max number of frames to loop over
 MaxLevels = 30;
-PlotData =  ones(1,MaxLevels);   % Data on refinement level k is plotted only if
+PlotData =  [1,0,0,0,0,zeros(1,MaxLevels)];   % Data on refinement level k is plotted only if
 			     % k'th component is nonzero
 PlotGrid =  zeros(1,MaxLevels);   % Plot grid lines on each level?
 

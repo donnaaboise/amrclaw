@@ -12,7 +12,11 @@ fprintf('%10s : %12.4f\n','qmax',qmax);
 if (PlotType == 3)
     caxis([0 200]);
 else
-    caxis([0.1 2.81]);
+    if (mq == 5)
+        caxis([0 1]);
+    else
+        caxis([0.1 2.81]);
+    end
 end
 
 showpatchborders
@@ -27,54 +31,49 @@ set(gca,'fontsize',16);
 prt = true;
 NoQuery = 0;
 if (prt)
-    MaxFrames = 31;
+    axis([0 2 0 0.5]);
     axis off;
+    delete(get(gca,'title'));
+    figsize = [8,2];  % Should match size set in valout_tikz.f
+    
+    % Need to set the figure size (not paper size) with
+    % 'export_fig'
+    set(gca,'position',[0 0 1 1]);
+    set(gcf,'units','inches');
+    set(gcf,'position',[1 8 figsize]);
+    
+    hidepatchborders;
+    hidegridlines;
 
     id = input('Input id to use : ');
-    if (~isempty(id))
-        axis off;
-        delete(get(gca,'title'));
-        
-        set(gcf,'papersize',[4,1]);
-        set(gca,'position',[0 0 1 1]);
-        set(gcf,'paperposition',[0 0 4 1]);
-    
-        % With mesh
-        setpatchborderprops('linewidth',1);
-        hidegridlines;
+    if (~isempty(id) | (id == 999))    
+        fname_prefix = 'amr_sb';
         if (PlotType == 3)
-            fname = sprintf('results_%03d/amr_sb_schlrn_%02d.png',id,Frame);            
-        else
-            fname = sprintf('results_%03d/amr_sb_%02d.png',id,Frame);
+            fname_prefix = [fname_prefix,'_schlrn'];
         end
         yn = 'y';
-        if (exist(fname))
-            str = sprintf('Are you sure you want to overwrite %s (y/[n]) ? ',...
-                fname);            
-            yn = input(str,'s');               
-            if isempty(yn)
+        fname_png = sprintf('results_%03d/%s_%04d_%02d.png',...
+            id,fname_prefix,Frame,plot_level);
+        if (exist(fname_png,'file'))
+            str = sprintf('Overwrite file %s (y/[n]) ? ',fname_png);
+            yn = input(str,'s');
+            if (isempty(yn))
                 yn = 'n';
             end
-        end      
-        if (strcmp(lower(yn),'y') == 1)
-            fprintf('Printing %s\n',fname);
-            print('-r512','-dpng',fname);
         end
-        
-        % no mesh
-        hidegridlines;
-        hidepatchborders;
-        if (PlotType == 3)
-            fname = sprintf('results_%03d/amr_sb_schlrn_nomesh_%02d.png',id,Frame);            
-        else
-            fname = sprintf('results_%03d/amr_sb_nomesh_%02d.png',id,Frame);
-        end
-        if (strcmp(lower(yn),'y') == 1)
-            fprintf('Printing %s\n',fname);
-            print('-r512','-dpng',fname);
-        end
-    end
-    
+                
+        if (strcmp(yn,'y') == 1)
+            % We have to use 'export_fig' here to get the 
+            % transparency right.  If I just set the figure
+            % color to 'none', space between the patches
+            % shows through (why?)
+            fprintf('Printing %s\n',fname_png);            
+            export_fig('-dpng','-transparent','-r1024',...
+                '-a1','-nocrop',fname_png);
+            plotgrid = 1;
+            create_tikz_plot(id,Frame,fname_prefix,1);
+        end                
+    end        
 end
 
 clear afterframe
