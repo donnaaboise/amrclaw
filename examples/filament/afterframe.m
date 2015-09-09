@@ -54,14 +54,11 @@ if (prt)
     axis off;
     delete(get(gca,'title'));
     figsize = [4,4];  % Should match size set in options
-%     set(gcf,'papersize',figsize);
-%     set(gca,'position',[0 0 1 1]);
-%     set(gcf,'paperposition',[0 0 figsize]);  
-    
+
     % Use this with 'export_fig'
-     set(gca,'position',[0 0 1 1]);
-     set(gcf,'units','inches');
-     set(gcf,'position',[1 7 figsize]);
+    set(gca,'position',[0 0 1 1]);
+    set(gcf,'units','inches');
+    set(gcf,'position',[1 7 figsize]);
     
     % Start printing
     id = input('Input id to use : ');

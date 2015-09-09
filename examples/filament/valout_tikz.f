@@ -9,6 +9,7 @@ c
       character*14 fname5
 
       double precision sx, sy, figsize(2)
+      integer mxf_global,myf_global
       integer xlow_d, ylow_d,xupper_d, yupper_d
 
 
@@ -116,8 +117,12 @@ c        # --------------------------
      &         '% through to higher levels.',/,
      &         '% ',/)
 
-         sx = figsize(1)/iregsz(mxnest)
-         sy = figsize(2)/jregsz(mxnest)
+c        # Set scaling for tikz figure.  figsize should match the value set
+c        # by plotting package (e.g. 'papersize' in Matlab).
+         mxf_global = iregsz(mxnest)
+         myf_global = jregsz(mxnest)
+         sx = figsize(1)/mxf_global
+         sy = figsize(2)/myf_global
 
          write(matunit5,1010) sx, sy
  1010    format('\begin{tikzpicture}',
@@ -125,15 +130,13 @@ c        # --------------------------
 
 c        # Tikz header at start of each new set of
 c        # grids at 'level'.  Use 'plotgrid' to control
-c        # if grid lines get created.
+c        # if patch borders will show up in the PDF file.
  1012    format('%--------------',/,
      &         '% Level ',I2,/,
      &         '% -------------',/,/,
      &         '\node (amrclaw_plot) at ',
      &         '(',F6.1,',',F6.1,') {\addlevel};',/,
      &         '\plotgrid{')
-
-
 
 c        # --------------------------
 c        # Done with tikz header info
@@ -194,12 +197,8 @@ c     # --------------------------
 c     # add tikz entry
 c     # --------------------------
 
-      ixf = 1
-      iyf = 1
-      do i = level,mxnest-1
-         ixf = ixf*intratx(i)
-         iyf = iyf*intraty(i)
-      enddo
+      ixf = iregsz(mxnest)/iregsz(level)
+      iyf = jregsz(mxnest)/jregsz(level)
 
       xlow_d = ixf*node(ndilo,mptr)
       xupper_d = ixf*(node(ndihi,mptr) + 1)
