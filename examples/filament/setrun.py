@@ -58,11 +58,11 @@ def setrun(claw_pkg='amrclaw'):
     # ---------------------------
     amrdata = rundata.amrdata
 
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 5
 
-    amrdata.refinement_ratios_x = [4,4,4, 2, 2, 2]
-    amrdata.refinement_ratios_y = [4,4,4, 2, 2, 2]
-    amrdata.refinement_ratios_t = [4,4,4, 2, 2, 2]
+    amrdata.refinement_ratios_x = [2,2,2, 2, 2, 2]
+    amrdata.refinement_ratios_y = [2,2,2, 2, 2, 2]
+    amrdata.refinement_ratios_t = [2,2,2, 2, 2, 2]
 
     amrdata.flag2refine = True      # use this?
     amrdata.flag2refine_tol = 0.1  # tolerance used in this routine
