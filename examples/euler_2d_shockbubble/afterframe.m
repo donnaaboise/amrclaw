@@ -61,7 +61,9 @@ if (prt)
                 yn = 'n';
             end
         end
-                
+           
+        
+        colormap(white)
         if (strcmp(yn,'y') == 1)
             % We have to use 'export_fig' here to get the 
             % transparency right.  If I just set the figure
