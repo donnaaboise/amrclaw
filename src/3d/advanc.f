@@ -39,7 +39,7 @@ c get start time for more detailed timing by level
       hz   = hzposs(level)
       delt = possk(level)
 c     Lay out linked list into array for easier parallelization
-      call prepgrids(listgrids,numgrids(level),level)
+c     call prepgrids(listgrids,numgrids(level),level)
 c
 
       call system_clock(clock_startBound,clock_rate)
@@ -50,13 +50,16 @@ c     maxthreads initialized to 1 above in case no openmp
 
 c     New code based on 2D
 !$OMP PARALLEL DO PRIVATE(j, locnew, locaux, mptr, nx, ny, nz, 
-!$OMP&                    mitot, mjtot, mktot,time),
+!$OMP&                    mitot, mjtot, mktot,time,levSt),
 !$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,
-!$OMP&                   nghost, node, rnode, numgrids, listgrids)
+!$OMP& listOfGrids,listStart,nghost, node, rnode, numgrids, listgrids)
 !$OMP&            SCHEDULE(dynamic,1),
 !$OMP&            DEFAULT(none)
       do j = 1, numgrids(level)
-         mptr   = listgrids(j)
+         !mptr   = listgrids(j)
+         levSt = listStart(level)
+         mptr   = listOfGrids(levSt+j-1)
+         !write(*,*)"old ",listgrids(j)," new",mptr
          nx     = node(ndihi,mptr) - node(ndilo,mptr) + 1
          ny     = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
          nz     = node(ndkhi,mptr) - node(ndklo,mptr) + 1
@@ -94,15 +97,17 @@ c
       call cpu_time(cpu_startStepgrid)
 
 !$OMP PARALLEL DO PRIVATE(j,mptr,nx,ny,nz,mitot,mjtot,mktot,
-!$OMP&                    dtnew, mythread,maxthreads),
+!$OMP&                    dtnew, mythread,maxthreads,levSt),
 !$OMP&            SHARED(rvol,rvoll,level,nvar,mxnest,alloc,intrat)
 !$OMP&            SHARED(nghost,intratx,intraty,intratz,hx,hy,hz)
 !$OMP&            SHARED(naux,listsp,node,rnode,dtlevnew)
-!$OMP&            SHARED(numgrids,listgrids)
+!$OMP&            SHARED(numgrids,listgrids,listStart,listOfGrids)
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
       do j = 1, numgrids(level)
-         mptr   = listgrids(j)
+         !mptr   = listgrids(j)
+         levSt = listStart(level)
+         mptr = listOfGrids(levSt+j-1)
          nx     = node(ndihi,mptr) - node(ndilo,mptr) + 1
          ny     = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
          nz     = node(ndkhi,mptr) - node(ndklo,mptr) + 1
@@ -161,7 +166,7 @@ c
       subroutine par_advanc (mptr,mitot,mjtot,mktot,nvar,naux,dtnew)
 c
       use amr_module
-      use gauges_module, only: print_gauges, num_gauges
+      use gauges_module, only: update_gauges, num_gauges
       implicit double precision (a-h,o-z)
 
 
@@ -247,7 +252,7 @@ c        # now has boundary conditions filled in.
 c     should change the way print_gauges does io - right now is critical section
 
       if (num_gauges > 0) then
-         call print_gauges(alloc(locnew:locnew+nvar*mitot*mjtot*mktot),
+         call update_gauges(alloc(locnew:locnew+nvar*mitot*mjtot*mktot),
      .                     alloc(locaux:locaux+nvar*mitot*mjtot*mktot),
      .                     xlow,ylow,zlow,nvar,mitot,mjtot,mktot,
      .                     naux,mptr)
