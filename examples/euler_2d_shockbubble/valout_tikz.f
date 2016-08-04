@@ -107,12 +107,12 @@ c        # (Matlab, Python,...)
 
          mx_coarse = 32
          my_coarse = 8
-         amr_levels_max = 4
+         amr_levels_max = mxnest
 
 c        # Refinement values
          do i = 1,amr_levels_max-1
-            Rx(i) = 4
-            Ry(i) = 4
+            Rx(i) = intratx(i)
+            Ry(i) = intraty(i)
          enddo
 
 c        # --------------------------------------

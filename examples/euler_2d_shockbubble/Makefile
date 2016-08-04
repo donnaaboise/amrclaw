@@ -25,7 +25,7 @@ RESTART ?= False                    # Should = clawdata.restart in setrun
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?= -O3 -fopenmp
+FFLAGS ?= -O2 -fopenmp
 
 
 
@@ -49,7 +49,7 @@ SOURCES = \
   ./flag2refine.f90 \
   ./valout_tikz.f \
   $(CLAW)/riemann/src/rpn2_euler_5wave.f90 \
-  $(CLAW)/riemann/src/rpt2_euler.f90 \
+  $(CLAW)/riemann/src/rpt2_euler_5wave.f90 \
   $(AMRLIB)/amr2.f90 \
   $(AMRLIB)/bc2amr.f \
   $(AMRLIB)/b4step2.f90 \
