@@ -11,7 +11,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      maux,auxbig,auxc1d,delt,mptr)
 
   USE amr_module, only : timemult, nghost, max1d, maxaux, mwaves,nestlevel,rnode, &
-                         auxtype, node, method
+       auxtype, node, method
   IMPLICIT NONE
 
   INTEGER mitot, mjtot, nvar, lenbc, lratiox, lratioy, maux
@@ -67,8 +67,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !!  of course to dimension by maux by max1dp1 but this wont work if maux=0
   !!  So need to access using your own indexing into auxl,auxr.
 
-!!  INTEGER iaddaux
-!!  iaddaux(iaux,i) = (i-1)*maux + iaux
+  !!  INTEGER iaddaux
+  !!  iaddaux(iaux,i) = (i-1)*maux + iaux
 
   !!
   !!      aux is auxiliary array with user parameters needed in Riemann solvers
@@ -106,9 +106,9 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   q(1:meqn,1-mbc:mx+mbc,1-mbc:my+mbc) => valbig
 
   if (maux .gt. 0) then
-    aux(1:maux,1-mbc:mx+mbc,1-mbc:my+mbc) => auxbig
-    auxl(1:maux,1:max1dp1) => auxlbig
-    auxr(1:maux,1:max1dp1) => auxrbig
+     aux(1:maux,1-mbc:mx+mbc,1-mbc:my+mbc) => auxbig
+     auxl(1:maux,1:max1dp1) => auxlbig
+     auxr(1:maux,1:max1dp1) => auxrbig
   endif
 
 
@@ -117,17 +117,17 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! --------
 
   !! All looping is over fine grid
-  DO j = 1, my
+  DO j = 1,my
      IF (maux .GT. 0) THEN
         DO ma = 1,maux
            IF (auxtype(ma) .EQ. "xleft") THEN
               !! # Assuming velocity at left-face, this fix
               !! # preserves conservation in incompressible flow:
-                auxl(ma,j+1) = aux(ma,1,j)
+              auxl(ma,j+1) = aux(ma,1,j)
            ELSE
               !! # Normal case -- we set the aux arrays
               !! # from the cell corresponding  to q
-                auxl(ma,j+1) = aux(ma,0,j)
+              auxl(ma,j+1) = aux(ma,0,j)
            ENDIF
         ENDDO
      ENDIF
@@ -142,7 +142,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         jfine = (jc-1)*lratioy + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
-                auxr(ma,jfine) = auxc1d(ma,index)
+              auxr(ma,jfine) = auxc1d(ma,index)
            ENDDO
         ENDIF
         DO mq = 1, meqn
@@ -158,17 +158,15 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! we have the wave. for side 1 add into sdflxm
   !!
 
-!!  influx = 0
   DO jc = 1,myc
      DO  l = 1, lratioy
-        jfine = (jc-1)*lratioy + l + 1
+        jfine = (jc-1)*lratioy + l
         DO  mq = 1, meqn
-            svdflx(mq,jc) = svdflx(mq,jc) &
-                      + amdq(mq,jfine) * dy * dt &
-                      + apdq(mq,jfine) * dy * dt
+           svdflx(mq,jc) = svdflx(mq,jc) &
+                + amdq(mq,jfine+1) * dy * dt &
+                + apdq(mq,jfine+1) * dy * dt
         ENDDO
      ENDDO
-!!     influx  = influx + 1
   ENDDO
   influx = myc
 
@@ -196,12 +194,10 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-!!  lind = 0
   DO ic = 1, mxc
      index = index + 1
      DO l = 1, lratiox
         ifine = (ic-1)*lratiox + l
-!!        lind = lind + 1
         IF (maux .GT. 0) THEN
            DO  ma = 1,maux
               IF (auxtype(ma) .EQ. "yleft") THEN
@@ -222,7 +218,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
        mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 
-!! we have the wave. for side 2. add into sdflxp
+  !! we have the wave. for side 2. add into sdflxp
 
   DO ic = 1, mxc
      DO l = 1, lratiox
@@ -236,7 +232,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
   influx = influx + mxc
 
- 299  continue
+299 continue
 
 
 
@@ -255,8 +251,6 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  lind = 0
-  ncrse = (mjtot-2*nghost)/lratioy
   DO jc = 1, myc
      index = index + 1
      DO l = 1, lratioy
@@ -284,14 +278,14 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! we have the wave. for side 3 add into sdflxp
   !!
   DO jc = 1, myc
-    DO l = 1, lratioy
+     DO l = 1, lratioy
         jfine = (jc-1)*lratioy + l
         DO mq = 1, meqn
-            svdflx(mq,influx + jc) = svdflx(mq,influx + jc) &
-                   - amdq(mq,jfine+1) * dy * dt &
-                   - apdq(mq,jfine+1) * dy * dt
+           svdflx(mq,influx + jc) = svdflx(mq,influx + jc) &
+                - amdq(mq,jfine+1) * dy * dt &
+                - apdq(mq,jfine+1) * dy * dt
         ENDDO
-    ENDDO
+     ENDDO
   ENDDO
   influx = influx + myc
 
@@ -308,7 +302,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDIF
 
   DO  i = 1, mx
-     IF (maux.GT.0) THEN
+     IF (maux .GT. 0) THEN
+        !! Is this conditional needed?  Loop won't do anything if maux == 0
         DO ma = 1,maux
            IF (auxtype(ma) .EQ. "yleft") THEN
               !! # Assuming velocity at bottom-face, this fix
@@ -345,8 +340,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! we have the wave. for side 4. add into sdflxm
   !!
   DO ic = 1, mxc
-!!     influx  = influx + 1
-     DO l = 1, lratiox
+     DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
         DO mq = 1, meqn
            svdflx(mq,influx + ic) = svdflx(mq,influx + ic) &
