@@ -54,11 +54,11 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   DOUBLE PRECISION s(mwaves,max1dp1)
   DOUBLE PRECISION amdq(nvar,max1dp1)
   DOUBLE PRECISION apdq(nvar,max1dp1)
-  DOUBLE PRECISION :: auxlbig(maxaux*max1dp1)
-  DOUBLE PRECISION :: auxrbig(maxaux*max1dp1)
+  DOUBLE PRECISION, target :: auxlbig(maxaux*max1dp1)
+  DOUBLE PRECISION, target :: auxrbig(maxaux*max1dp1)
 
-!!  DOUBLE PRECISION, POINTER :: auxl(:,:)
-!!  DOUBLE PRECISION, POINTER :: auxr(:,:)
+  DOUBLE PRECISION, POINTER :: auxl(:,:)
+  DOUBLE PRECISION, POINTER :: auxr(:,:)
 
   !!
   !!  WARNING: auxl,auxr dimensioned at max possible, but used as if
@@ -79,7 +79,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   DOUBLE PRECISION tgrid
   INTEGER nc, nr, level, index, l
-  INTEGER i,j,ma,ivar, lind, ncrse, ic, jc, jfine, influx
+  INTEGER i,j,ma,mq, lind, ncrse, ic, jc, jfine, influx
   INTEGER iaux, ifine
 
   INTEGER mx,my,mbc,meqn
@@ -103,8 +103,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   if (maux .gt. 0) then
     aux(1:maux,1-mbc:mx+mbc,1-mbc:my+mbc) => auxbig
-!!    auxl(1:maux,1:max1dp1) => auxlbig
-!!    auxr(1:maux,1:max1dp1) => auxrbig
+    auxl(1:maux,1:max1dp1) => auxlbig
+    auxr(1:maux,1:max1dp1) => auxrbig
   endif
 
 
@@ -118,16 +118,16 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
            IF (auxtype(ma) .EQ. "xleft") THEN
               !! # Assuming velocity at left-face, this fix
               !! # preserves conservation in incompressible flow:
-                auxlbig(iaddaux(ma,j+1)) = aux(ma,1,j)
+                auxl(ma,j+1) = aux(ma,1,j)
            ELSE
               !! # Normal case -- we set the aux arrays
               !! # from the cell corresponding  to q
-                auxlbig(iaddaux(ma,j+1)) = aux(ma,0,j)
+                auxl(ma,j+1) = aux(ma,0,j)
            ENDIF
         ENDDO
      ENDIF
-     DO ivar = 1, meqn
-        ql(ivar,j+1) = q(ivar,0,j)
+     DO mq = 1,meqn
+        ql(mq,j+1) = q(mq,0,j)
      ENDDO
   ENDDO
 
@@ -139,31 +139,31 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         lind = lind + 1
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
-                auxrbig(iaddaux(ma,lind)) = auxc1d(ma,index)
+                auxr(ma,lind) = auxc1d(ma,index)
            ENDDO
         ENDIF
-        DO ivar = 1, meqn
-           qr(ivar,lind) = qc1d(ivar,index)
+        DO mq = 1, meqn
+           qr(mq,lind) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
 
 
-  CALL rpn2(1,max1dp1-2*mbc,nvar,mwaves,maux,mbc, &
-       my+1-2*mbc,ql,qr,auxlbig,auxrbig,wave,s,amdq,apdq)
+  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+       my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
   !!
   !! we have the wave. for side 1 add into sdflxm
   !!
 
   influx = 0
-  DO j = 1, nc/lratioy
+  DO j = 1, my/lratioy
      influx  = influx + 1
      jfine = (j-1)*lratioy
-     DO  ivar = 1, meqn
+     DO  mq = 1, meqn
         DO  l = 1, lratioy
-           svdflx(ivar,influx) = svdflx(ivar,influx) &
-                + amdq(ivar,jfine+l+1) * hy * delt &
-                + apdq(ivar,jfine+l+1) * hy * delt
+           svdflx(mq,influx) = svdflx(mq,influx) &
+                + amdq(mq,jfine+l+1) * dy * dt &
+                + apdq(mq,jfine+l+1) * dy * dt
         ENDDO
      ENDDO
   ENDDO
@@ -180,110 +180,60 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      go to 299
   ENDIF
 
-       do 210 i = nghost+1, mitot-nghost
-        if (maux .gt. 0) then
-          do 205 ma = 1,maux
-             auxrbig(iaddaux(ma,i-nghost)) = auxbig(ma,i,mjtot-nghost+1)
- 205         continue
-          endif
-        do 210 ivar = 1, nvar
-            qr(ivar,i-nghost) = valbig(ivar,i,mjtot-nghost+1)
- 210    continue
 
-       lind = 0
-       ncrse = (mitot-2*nghost)/lratiox
-       do 220 ic = 1, ncrse
-         index = index + 1
-         do 225 l = 1, lratiox
-         lind = lind + 1
-         if (maux.gt.0) then
-            do 224 ma=1,maux
-             if (auxtype(ma).eq."yleft") then
-!!                # Assuming velocity at bottom-face, this fix
-!!                # preserves conservation in incompressible flow:
-                 ifine = (ic-1)*lratiox + nghost + l
-                 auxlbig(iaddaux(ma,lind+1)) = auxbig(ma,ifine,mjtot-nghost+1)
-               else
-                 auxlbig(iaddaux(ma,lind+1)) = auxc1d(ma,index)
-               endif
-  224          continue
-            endif
-         do 225 ivar = 1, nvar
- 225         ql(ivar,lind+1) = qc1d(ivar,index)
- 220    continue
+  DO i = 1, mx
+     IF (maux .GT. 0) THEN
+        DO ma = 1,maux
+           auxr(ma,i) = aux(ma,i,my+1)
+        ENDDO
+     ENDIF
+     DO  mq = 1, meqn
+        qr(mq,i) = q(mq,i,my+1)
+     ENDDO
+  ENDDO
 
-       call rpn2(2,max1dp1-2*nghost,nvar,mwaves,maux,nghost, &
-                   nr+1-2*nghost,ql,qr,auxlbig,auxrbig,wave,s,amdq,apdq)
-!!
+  lind = 0
+  ncrse = mx/lratiox
+  DO ic = 1, ncrse
+     index = index + 1
+     DO l = 1, lratiox
+        lind = lind + 1
+        IF (maux .GT. 0) THEN
+           DO  ma = 1,maux
+              IF (auxtype(ma) .EQ. "yleft") THEN
+                 !! # Assuming velocity at bottom-face, this fix
+                 !! # preserves conservation in incompressible flow:
+                 ifine = (ic-1)*lratiox + l
+                 auxl(ma,lind+1) = aux(ma,ifine,my+1)
+              ELSE
+                 auxl(ma,lind+1) = auxc1d(ma,index)
+              ENDIF
+           ENDDO
+        ENDIF
+        DO  mq = 1, meqn
+           ql(mq,lind+1) = qc1d(mq,index)
+        ENDDO
+     ENDDO
+  ENDDO
+
+  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+       mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+
 !! we have the wave. for side 2. add into sdflxp
-!!
-       do 230 i = 1, nr/lratiox
-          influx  = influx + 1
-          ifine = (i-1)*lratiox
-          do 240 ivar = 1, nvar
-            do 250 l = 1, lratiox
-              svdflx(ivar,influx) = svdflx(ivar,influx) &
-                          - amdq(ivar,ifine+l+1) * hx * delt &
-                          - apdq(ivar,ifine+l+1) * hx * delt
- 250         continue
- 240       continue
- 230    continue
+
+  DO i = 1, mx/lratiox
+     influx  = influx + 1
+     ifine = (i-1)*lratiox
+     DO mq = 1, meqn
+        DO l = 1, lratiox
+           svdflx(mq,influx) = svdflx(mq,influx) &
+                - amdq(mq,ifine+l+1) * dx * dt &
+                - apdq(mq,ifine+l+1) * dx * dt
+        ENDDO
+     ENDDO
+  ENDDO
 
  299  continue
-
-
-
-!!  DO i = 1, mx
-!!     IF (maux .GT. 0) THEN
-!!        DO ma = 1,maux
-!!           auxr(ma,i) = aux(ma,i,my+1)
-!!        ENDDO
-!!     ENDIF
-!!     DO  ivar = 1, meqn
-!!        qr(ivar,i) = q(ivar,i,my+1)
-!!     ENDDO
-!!  ENDDO
-
-!!  lind = 0
-!!  ncrse = mx/lratiox
-!!  DO ic = 1, ncrse
-!!     index = index + 1
-!!     DO l = 1, lratiox
-!!        lind = lind + 1
-!!        IF (maux .GT. 0) THEN
-!!           DO  ma = 1,maux
-!!              IF (auxtype(ma) .EQ. "yleft") THEN
-!!                 !! # Assuming velocity at bottom-face, this fix
-!!                 !! # preserves conservation in incompressible flow:
-!!                 ifine = (ic-1)*lratiox + l
-!!                 auxl(ma,lind+1) = aux(ma,ifine,my+1)
-!!              ELSE
-!!                 auxl(ma,lind+1) = auxc1d(ma,index)
-!!              ENDIF
-!!           ENDDO
-!!        ENDIF
-!!        DO  ivar = 1, meqn
-!!           ql(ivar,lind+1) = qc1d(ivar,index)
-!!        ENDDO
-!!     ENDDO
-!!  ENDDO
-
-!!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!       mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-!!  !!
-!!  !! we have the wave. for side 2. add into sdflxp
-!!  !!
-!!  DO i = 1, nr/lratiox
-!!     influx  = influx + 1
-!!     ifine = (i-1)*lratiox
-!!     DO ivar = 1, nvar
-!!        DO l = 1, lratiox
-!!           svdflx(ivar,influx) = svdflx(ivar,influx) &
-!!                - amdq(ivar,ifine+l+1) * hx * delt &
-!!                - apdq(ivar,ifine+l+1) * hx * delt
-!!        ENDDO
-!!     ENDDO
-!!  ENDDO
 
 
 
@@ -291,14 +241,14 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !!  side 3
   !! --------
   !!
-  DO j = nghost+1, mjtot-nghost
+  DO j = 1, my
      IF (maux.GT.0) THEN
         DO ma = 1,maux
-           auxrbig(iaddaux(ma,j-nghost)) = auxbig(ma,mitot-nghost+1,j)
+           auxr(ma,j) = aux(ma,mx+1,j)
         ENDDO
      ENDIF
-     DO ivar = 1, nvar
-        qr(ivar,j-nghost) = valbig(ivar,mitot-nghost+1,j)
+     DO mq = 1, meqn
+        qr(mq,j) = q(mq,mx+1,j)
      ENDDO
   ENDDO
 
@@ -313,33 +263,32 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
               IF (auxtype(ma).EQ."xleft") THEN
                  !! # Assuming velocity at left-face, this fix
                  !! # preserves conservation in incompressible flow:
-                 jfine = (jc-1)*lratioy + nghost + l
-                 auxlbig(iaddaux(ma,lind+1)) =  &
-                      auxbig(ma,mitot-nghost+1,jfine)
+                 jfine = (jc-1)*lratioy + l
+                 auxl(ma,lind+1) = aux(ma,mx+1,jfine)
               ELSE
-                 auxlbig(iaddaux(ma,lind+1)) = auxc1d(ma,index)
+                 auxl(ma,lind+1) = auxc1d(ma,index)
               ENDIF
            ENDDO
         ENDIF
-        DO ivar = 1, nvar
-           ql(ivar,lind+1) = qc1d(ivar,index)
+        DO mq = 1, meqn
+           ql(mq,lind+1) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
 
-  CALL rpn2(1,max1dp1-2*nghost,nvar,mwaves,maux,nghost, &
-       nc+1-2*nghost,ql,qr,auxlbig,auxrbig,wave,s,amdq,apdq)
+  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+       my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
   !!
   !! we have the wave. for side 3 add into sdflxp
   !!
-  DO j = 1, nc/lratioy
+  DO j = 1, my/lratioy
      influx = influx + 1
      jfine = (j-1)*lratioy
-     DO ivar = 1, nvar
+     DO mq = 1, meqn
         DO l = 1, lratioy
-           svdflx(ivar,influx) = svdflx(ivar,influx) &
-                - amdq(ivar,jfine+l+1) * hy * delt &
-                - apdq(ivar,jfine+l+1) * hy * delt
+           svdflx(mq,influx) = svdflx(mq,influx) &
+                - amdq(mq,jfine+l+1) * dy * dt &
+                - apdq(mq,jfine+l+1) * dy * dt
         ENDDO
      ENDDO
   ENDDO
@@ -356,53 +305,53 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      go to 499
   ENDIF
 
-  DO  i = nghost+1, mitot-nghost
+  DO  i = 1, mx
      IF (maux.GT.0) THEN
         DO ma = 1,maux
            IF (auxtype(ma).EQ."yleft") THEN
               !! # Assuming velocity at bottom-face, this fix
               !! # preserves conservation in incompressible flow:
-              auxlbig(iaddaux(ma,i-nghost+1)) = auxbig(ma,i,nghost+1)
+              auxl(ma,i+1) = aux(ma,i,1)
            ELSE
-              auxlbig(iaddaux(ma,i-nghost+1)) = auxbig(ma,i,nghost)
+              auxl(ma,i+1) = aux(ma,i,0)
            ENDIF
         ENDDO
      ENDIF
-     DO ivar = 1, nvar
-        ql(ivar,i-nghost+1) = valbig(ivar,i,nghost)
+     DO mq = 1, meqn
+        ql(mq,i+1) = q(mq,i,0)
      ENDDO
   ENDDO
 
   lind = 0
-  ncrse = (mitot-2*nghost)/lratiox
+  ncrse = mx/lratiox
   DO ic = 1, ncrse
      index = index + 1
      DO l = 1, lratiox
         lind = lind + 1
         IF (maux .GT. 0) THEN
            DO ma=1,maux
-              auxrbig(iaddaux(ma,lind)) = auxc1d(ma,index)
+              auxr(ma,lind) = auxc1d(ma,index)
            ENDDO
         ENDIF
-        DO  ivar = 1, nvar
-           qr(ivar,lind) = qc1d(ivar,index)
+        DO  mq = 1, meqn
+           qr(mq,lind) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
 
-  CALL rpn2(2,max1dp1-2*nghost,nvar,mwaves,maux,nghost, &
-       nr+1-2*nghost,ql,qr,auxlbig,auxrbig,wave,s,amdq,apdq)
+  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+       mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
   !!
   !! we have the wave. for side 4. add into sdflxm
   !!
-  DO i = 1, nr/lratiox
+  DO i = 1, mx/lratiox
      influx  = influx + 1
      ifine = (i-1)*lratiox
-     DO ivar = 1, nvar
+     DO mq = 1, meqn
         DO l = 1, lratiox
-           svdflx(ivar,influx) = svdflx(ivar,influx) &
-                + amdq(ivar,ifine+l+1) * hx * delt &
-                + apdq(ivar,ifine+l+1) * hx * delt
+           svdflx(mq,influx) = svdflx(mq,influx) &
+                + amdq(mq,ifine+l+1) * dx * dt &
+                + apdq(mq,ifine+l+1) * dx * dt
         ENDDO
      ENDDO
   ENDDO
@@ -411,7 +360,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   !!      # for source terms:
   IF (method(5) .NE. 0) THEN   ! should I test here if index=0 and all skipped?
-     !!   call src1d(nvar,nghost,lenbc,qc1d,maux,auxc1d,tgrid,delt)
+     !!   call src1d(meqn,nghost,lenbc,qc1d,maux,auxc1d,tgrid,delt)
      !! # how can this be right - where is the integrated src term used?
   ENDIF
 
