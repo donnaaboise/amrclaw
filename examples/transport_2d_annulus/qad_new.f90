@@ -11,21 +11,21 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      maux,auxbig,auxc1d,delt,mptr)
 
   USE amr_module, only : timemult, nghost, max1d, maxaux, mwaves,nestlevel,rnode, &
-                          auxtype, node, method
+                         auxtype, node, method
   IMPLICIT NONE
 
-  INTEGER mitot, mjtot, nvar, lenbc, lratiox, lratioy,maux
+  INTEGER mitot, mjtot, nvar, lenbc, lratiox, lratioy, maux
   INTEGER mptr
   DOUBLE PRECISION hx,hy,delt
 
-  DOUBLE PRECISION, target :: valbig(nvar,mitot,mjtot)
-  DOUBLE PRECISION, target :: auxbig(maux,mitot,mjtot)
+  DOUBLE PRECISION, TARGET :: valbig(nvar,mitot,mjtot)
+  DOUBLE PRECISION, TARGET :: auxbig(maux,mitot,mjtot)
   DOUBLE PRECISION qc1d(nvar,lenbc)
   DOUBLE PRECISION svdflx(nvar,lenbc)
   DOUBLE PRECISION auxc1d(maux,lenbc)
 
-  double precision, pointer :: q(:,:,:)
-  double precision, pointer :: aux(:,:,:)
+  DOUBLE PRECISION, POINTER :: q(:,:,:)
+  DOUBLE PRECISION, POINTER :: aux(:,:,:)
 
   !!
   !! ::::::::::::::::::::::::::: QAD ::::::::::::::::::::::::::::::::::
@@ -54,8 +54,9 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   DOUBLE PRECISION s(mwaves,max1dp1)
   DOUBLE PRECISION amdq(nvar,max1dp1)
   DOUBLE PRECISION apdq(nvar,max1dp1)
-  DOUBLE PRECISION, target :: auxlbig(maxaux*max1dp1)
-  DOUBLE PRECISION, target :: auxrbig(maxaux*max1dp1)
+
+  DOUBLE PRECISION, TARGET :: auxlbig(maxaux*max1dp1)
+  DOUBLE PRECISION, TARGET :: auxrbig(maxaux*max1dp1)
 
   DOUBLE PRECISION, POINTER :: auxl(:,:)
   DOUBLE PRECISION, POINTER :: auxr(:,:)
@@ -66,8 +67,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !!  of course to dimension by maux by max1dp1 but this wont work if maux=0
   !!  So need to access using your own indexing into auxl,auxr.
 
-  INTEGER iaddaux
-  iaddaux(iaux,i) = (i-1)*maux + iaux
+!!  INTEGER iaddaux
+!!  iaddaux(iaux,i) = (i-1)*maux + iaux
 
   !!
   !!      aux is auxiliary array with user parameters needed in Riemann solvers
@@ -79,10 +80,10 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   DOUBLE PRECISION tgrid
   INTEGER nc, nr, level, index, l
-  INTEGER i,j,ma,mq, lind, ncrse, ic, jc, jfine, influx
-  INTEGER iaux, ifine
+  INTEGER i,j,ma,lind, ncrse, ic, jc, ifine, jfine, influx
+  INTEGER iaux
 
-  INTEGER mx,my,mbc,meqn
+  INTEGER mx,my,mbc,meqn, mxc, myc, mq
   DOUBLE PRECISION dt, dx, dy
 
   tgrid = rnode(timemult, mptr)
@@ -99,6 +100,9 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   dx = hx
   dy = hy
 
+  myc = my/lratioy
+  mxc = mx/lratiox
+
   q(1:meqn,1-mbc:mx+mbc,1-mbc:my+mbc) => valbig
 
   if (maux .gt. 0) then
@@ -111,7 +115,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! --------
   !!  side 1
   !! --------
-  !!
+
+  !! All looping is over fine grid
   DO j = 1, my
      IF (maux .GT. 0) THEN
         DO ma = 1,maux
@@ -131,19 +136,17 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  lind = 0
-  ncrse = my/lratioy
-  DO jc = 1, ncrse
+  DO jc = 1, myc
      index = index + 1
      DO l = 1, lratioy
-        lind = lind + 1
+        jfine = (jc-1)*lratioy + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
-                auxr(ma,lind) = auxc1d(ma,index)
+                auxr(ma,jfine) = auxc1d(ma,index)
            ENDDO
         ENDIF
         DO mq = 1, meqn
-           qr(mq,lind) = qc1d(mq,index)
+           qr(mq,jfine) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
@@ -155,24 +158,25 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! we have the wave. for side 1 add into sdflxm
   !!
 
-  influx = 0
-  DO j = 1, my/lratioy
-     influx  = influx + 1
-     jfine = (j-1)*lratioy
-     DO  mq = 1, meqn
-        DO  l = 1, lratioy
-           svdflx(mq,influx) = svdflx(mq,influx) &
-                + amdq(mq,jfine+l+1) * dy * dt &
-                + apdq(mq,jfine+l+1) * dy * dt
+!!  influx = 0
+  DO jc = 1,myc
+     DO  l = 1, lratioy
+        jfine = (jc-1)*lratioy + l + 1
+        DO  mq = 1, meqn
+            svdflx(mq,jc) = svdflx(mq,jc) &
+                      + amdq(mq,jfine) * dy * dt &
+                      + apdq(mq,jfine) * dy * dt
         ENDDO
      ENDDO
+!!     influx  = influx + 1
   ENDDO
+  influx = myc
 
   !! --------
   !!  side 2
   !! --------
   !!
-  IF (mjtot .EQ. 2*nghost+1) THEN
+  IF (my .EQ. 1) THEN
      !! # a single row of interior cells only happens when using the
      !! # 2d amrclaw code to do a 1d problem with refinement.
      !! # (feature added in Version 4.3)
@@ -192,26 +196,25 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  lind = 0
-  ncrse = mx/lratiox
-  DO ic = 1, ncrse
+!!  lind = 0
+  DO ic = 1, mxc
      index = index + 1
      DO l = 1, lratiox
-        lind = lind + 1
+        ifine = (ic-1)*lratiox + l
+!!        lind = lind + 1
         IF (maux .GT. 0) THEN
            DO  ma = 1,maux
               IF (auxtype(ma) .EQ. "yleft") THEN
                  !! # Assuming velocity at bottom-face, this fix
                  !! # preserves conservation in incompressible flow:
-                 ifine = (ic-1)*lratiox + l
-                 auxl(ma,lind+1) = aux(ma,ifine,my+1)
+                 auxl(ma,ifine+1) = aux(ma,ifine,my+1)
               ELSE
-                 auxl(ma,lind+1) = auxc1d(ma,index)
+                 auxl(ma,ifine+1) = auxc1d(ma,index)
               ENDIF
            ENDDO
         ENDIF
         DO  mq = 1, meqn
-           ql(mq,lind+1) = qc1d(mq,index)
+           ql(mq,ifine+1) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
@@ -221,17 +224,17 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
 !! we have the wave. for side 2. add into sdflxp
 
-  DO i = 1, mx/lratiox
-     influx  = influx + 1
-     ifine = (i-1)*lratiox
-     DO mq = 1, meqn
-        DO l = 1, lratiox
-           svdflx(mq,influx) = svdflx(mq,influx) &
-                - amdq(mq,ifine+l+1) * dx * dt &
-                - apdq(mq,ifine+l+1) * dx * dt
+  DO ic = 1, mxc
+     DO l = 1, lratiox
+        ifine = (ic-1)*lratiox + l
+        DO mq = 1, meqn
+           svdflx(mq,influx+ic) = svdflx(mq,influx+ic) &
+                - amdq(mq,ifine+1) * dx * dt &
+                - apdq(mq,ifine+1) * dx * dt
         ENDDO
      ENDDO
   ENDDO
+  influx = influx + mxc
 
  299  continue
 
@@ -242,7 +245,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! --------
   !!
   DO j = 1, my
-     IF (maux.GT.0) THEN
+     IF (maux .GT. 0) THEN
         DO ma = 1,maux
            auxr(ma,j) = aux(ma,mx+1,j)
         ENDDO
@@ -254,24 +257,23 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   lind = 0
   ncrse = (mjtot-2*nghost)/lratioy
-  DO jc = 1, ncrse
+  DO jc = 1, myc
      index = index + 1
      DO l = 1, lratioy
-        lind = lind + 1
+        jfine = (jc-1)*lratioy + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
               IF (auxtype(ma).EQ."xleft") THEN
                  !! # Assuming velocity at left-face, this fix
                  !! # preserves conservation in incompressible flow:
-                 jfine = (jc-1)*lratioy + l
-                 auxl(ma,lind+1) = aux(ma,mx+1,jfine)
+                 auxl(ma,jfine+1) = aux(ma,mx+1,jfine)
               ELSE
-                 auxl(ma,lind+1) = auxc1d(ma,index)
+                 auxl(ma,jfine+1) = auxc1d(ma,index)
               ENDIF
            ENDDO
         ENDIF
         DO mq = 1, meqn
-           ql(mq,lind+1) = qc1d(mq,index)
+           ql(mq,jfine+1) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
@@ -281,23 +283,23 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !!
   !! we have the wave. for side 3 add into sdflxp
   !!
-  DO j = 1, my/lratioy
-     influx = influx + 1
-     jfine = (j-1)*lratioy
-     DO mq = 1, meqn
-        DO l = 1, lratioy
-           svdflx(mq,influx) = svdflx(mq,influx) &
-                - amdq(mq,jfine+l+1) * dy * dt &
-                - apdq(mq,jfine+l+1) * dy * dt
+  DO jc = 1, myc
+    DO l = 1, lratioy
+        jfine = (jc-1)*lratioy + l
+        DO mq = 1, meqn
+            svdflx(mq,influx + jc) = svdflx(mq,influx + jc) &
+                   - amdq(mq,jfine+1) * dy * dt &
+                   - apdq(mq,jfine+1) * dy * dt
         ENDDO
-     ENDDO
+    ENDDO
   ENDDO
+  influx = influx + myc
 
   !! --------
   !!  side 4
   !! --------
   !!
-  IF (mjtot .EQ. 2*nghost+1) THEN
+  IF (my .EQ. 1) THEN
      !! # a single row of interior cells only happens when using the
      !! # 2d amrclaw code to do a 1d problem with refinement.
      !! # (feature added in Version 4.3)
@@ -308,7 +310,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   DO  i = 1, mx
      IF (maux.GT.0) THEN
         DO ma = 1,maux
-           IF (auxtype(ma).EQ."yleft") THEN
+           IF (auxtype(ma) .EQ. "yleft") THEN
               !! # Assuming velocity at bottom-face, this fix
               !! # preserves conservation in incompressible flow:
               auxl(ma,i+1) = aux(ma,i,1)
@@ -322,19 +324,17 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  lind = 0
-  ncrse = mx/lratiox
-  DO ic = 1, ncrse
+  DO ic = 1, mxc
      index = index + 1
      DO l = 1, lratiox
-        lind = lind + 1
+        ifine = (ic-1)*lratiox + l
         IF (maux .GT. 0) THEN
            DO ma=1,maux
-              auxr(ma,lind) = auxc1d(ma,index)
+              auxr(ma,ifine) = auxc1d(ma,index)
            ENDDO
         ENDIF
         DO  mq = 1, meqn
-           qr(mq,lind) = qc1d(mq,index)
+           qr(mq,ifine) = qc1d(mq,index)
         ENDDO
      ENDDO
   ENDDO
@@ -344,14 +344,14 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !!
   !! we have the wave. for side 4. add into sdflxm
   !!
-  DO i = 1, mx/lratiox
-     influx  = influx + 1
-     ifine = (i-1)*lratiox
-     DO mq = 1, meqn
-        DO l = 1, lratiox
-           svdflx(mq,influx) = svdflx(mq,influx) &
-                + amdq(mq,ifine+l+1) * dx * dt &
-                + apdq(mq,ifine+l+1) * dx * dt
+  DO ic = 1, mxc
+!!     influx  = influx + 1
+     DO l = 1, lratiox
+        ifine = (ic-1)*lratiox + l
+        DO mq = 1, meqn
+           svdflx(mq,influx + ic) = svdflx(mq,influx + ic) &
+                + amdq(mq,ifine + 1) * dx * dt &
+                + apdq(mq,ifine + 1) * dx * dt
         ENDDO
      ENDDO
   ENDDO
