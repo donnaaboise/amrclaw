@@ -6,8 +6,8 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
   DOUBLE PRECISION qf(meqn,mx), qc(meqn,mx)
   DOUBLE PRECISION auxf(maux,mx), auxc(maux,mx)
 
-  DOUBLE PRECISION amdq(meqn,0:mx)  
-  DOUBLE PRECISION apdq(meqn,0:mx)
+  DOUBLE PRECISION amdq(meqn,mx)  
+  DOUBLE PRECISION apdq(meqn,mx)
 
 
   !! automatically allocated

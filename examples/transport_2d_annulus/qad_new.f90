@@ -165,8 +165,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
 
 
-  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+!!            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 
 
   prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
@@ -208,7 +208,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         DO  mq = 1,meqn
            !! This should equal a jump in fluxes across the interface.  Not clear
            !! that it does in the mapped grid case.
-           delta_fix = amdq(mq,jfine + 1) + apdq(mq,jfine + 1)
+           delta_fix = amdq(mq,jfine) + apdq(mq,jfine)
            svdflx(mq,influx+jc) = svdflx(mq,influx+jc) + dy*dt*delta_fix
 !!                + amdq(mq,jfine + 1) * dy * dt &
 !!                + apdq(mq,jfine + 1) * dy * dt
@@ -260,8 +260,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+!!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+!!            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 
 
   !! side 2 (iface = 4  (top edge))
@@ -269,8 +269,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   iface = 3
   !! qf = qr
   !! qc = ql
-!!  CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
-!!                qr,ql,auxr,auxl,amdq,apdq)
+  CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
+                qr,ql,auxr,auxl,amdq,apdq)
 
   !! we have the wave. for side 2. add into sdflxp
 
@@ -278,7 +278,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
         DO mq = 1,meqn
-           delta_fix = amdq(mq,ifine + 1) + apdq(mq,ifine + 1)
+           delta_fix = amdq(mq,ifine) + apdq(mq,ifine)
            svdflx(mq,influx+ic) = svdflx(mq,influx+ic) - dx*dt*delta_fix
 !!                - amdq(mq,ifine + 1) * dx * dt &
 !!                - apdq(mq,ifine + 1) * dx * dt
@@ -325,8 +325,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
+!!            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 
 
   prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
@@ -364,7 +364,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      DO l = 1, lratioy
         jfine = (jc-1)*lratioy + l
         DO mq = 1, meqn
-           delta_fix = amdq(mq,jfine + 1) + apdq(mq,jfine + 1)
+           delta_fix = amdq(mq,jfine) + apdq(mq,jfine)
            svdflx(mq,influx + jc) = svdflx(mq,influx + jc) - dy*dt*delta_fix
 !!                - amdq(mq,jfine + 1) * dy * dt &
 !!                - apdq(mq,jfine + 1) * dy * dt
@@ -435,7 +435,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
         DO mq = 1,meqn
-           delta_fix = amdq(mq,ifine + 1) + apdq(mq,ifine + 1)
+           delta_fix = amdq(mq,ifine) + apdq(mq,ifine)
            svdflx(mq,influx + ic) = svdflx(mq,influx + ic) + dx*dt*delta_fix
 !!                + amdq(mq,ifine + 1) * dx * dt &
 !!                + apdq(mq,ifine + 1) * dx * dt
