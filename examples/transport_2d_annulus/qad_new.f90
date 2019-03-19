@@ -52,7 +52,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   DOUBLE PRECISION qr(nvar,max1dp1)
   DOUBLE PRECISION wave(nvar,mwaves,max1dp1)
   DOUBLE PRECISION s(mwaves,max1dp1)
-  DOUBLE PRECISION amdq(nvar,max1dp1)
+  DOUBLE PRECISION amdq(nvar,max1dp1)  
   DOUBLE PRECISION apdq(nvar,max1dp1)
 
   DOUBLE PRECISION, TARGET :: auxlbig(maxaux*max1dp1)
@@ -85,6 +85,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   INTEGER mx,my,mbc,meqn, mxc, myc, mq, ladd
   DOUBLE PRECISION dt, dx, dy, delta_fix
+  integer iface, idir
+  logical prt
 
   tgrid = rnode(timemult, mptr)
   nr = mitot-2*nghost
@@ -120,7 +122,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! Counter for saving fluxes
   influx = 0
 
-  !! Added to index for left states;  equal to 0 or 1.
+  !! Added to index for left states.  Needed so that rpn2 interprets
+  !! ql and qr correctly.
   ladd = 1
 
   !! --------
@@ -162,14 +165,38 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
 
 
-!! Not clear what the value 'my + 1-2*mbc' should represent. From looking at solvers
-!! in riemann/src, most solvers are expecting an 'mx' value here. 
-
-!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!              my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
   CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            my,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+
+
+  prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
+  prt = .false.
+  if (prt) then
+      do j = my/2,my/2+10
+          write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
+      end do
+      write(6,*) ' '
+  endif
+
+100 format(I5,2E16.8)
+
+
+  !! side 1 (iface = 0)
+  idir = 0
+  iface = 0
+  !! qf = ql
+  !! qc = qr
+  CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
+                ql,qr,auxl,auxr,amdq,apdq)
+
+  if (prt) then
+      do j = my/2, my/2 + 10
+         write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
+      end do
+      write(6,*) ' '
+      write(6,*) ' '
+   endif
+
 
   !!
   !! we have the wave. for side 1 add into sdflxm
@@ -221,8 +248,6 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         IF (maux .GT. 0) THEN
            DO  ma = 1,maux
               IF (auxtype(ma) .EQ. "yleft") THEN
-                 !! # Assuming velocity at bottom-face, this fix
-                 !! # preserves conservation in incompressible flow:
                  auxl(ma,ifine + ladd) = aux(ma,ifine,my+1)
               ELSE
                  auxl(ma,ifine + ladd) = auxc1d(ma,index + ic)
@@ -235,11 +260,17 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-!!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!       mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
   CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            mx,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+
+
+  !! side 2 (iface = 4  (top edge))
+  idir = 1
+  iface = 3
+  !! qf = qr
+  !! qc = ql
+!!  CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
+!!                qr,ql,auxr,auxl,amdq,apdq)
 
   !! we have the wave. for side 2. add into sdflxp
 
@@ -282,8 +313,6 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
               IF (auxtype(ma).EQ."xleft") THEN
-                 !! # Assuming velocity at left-face, this fix
-                 !! # preserves conservation in incompressible flow:
                  auxl(ma,jfine+ladd) = aux(ma,mx+1,jfine)
               ELSE
                  auxl(ma,jfine+ladd) = auxc1d(ma,index + jc)
@@ -296,11 +325,37 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!       my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
   CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            my,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+
+
+  prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
+  prt = .false.
+  if (prt) then
+      do j = my/2,my/2+10
+          write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
+      end do
+      write(6,*) ' '
+  endif
+
+
+  !! side 3 (iface = 1  (right edge))
+  idir = 0
+  iface = 1
+  !! qf = qr
+  !! qc = ql
+  CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
+                qr,ql,auxr,auxl,amdq,apdq)
+
+  if (prt) then
+      do j = my/2, my/2 + 10
+         write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
+      end do
+      write(6,*) ' '
+      stop
+   endif
+
+
 
   !!
   !! we have the wave. for side 3 add into sdflxp
@@ -336,8 +391,6 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         !! Is this conditional needed?  Loop won't do anything if maux == 0
         DO ma = 1,maux
            IF (auxtype(ma) .EQ. "yleft") THEN
-              !! # Assuming velocity at bottom-face, this fix
-              !! # preserves conservation in incompressible flow:
               auxl(ma,i+ladd) = aux(ma,i,1)
            ELSE
               auxl(ma,i+ladd) = aux(ma,i,0)
@@ -364,10 +417,15 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
 
 !!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!       mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+!!            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 
-  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-            mx,ql,qr,auxl,auxr,wave,s,amdq,apdq)
+  !! side 4 (iface = 2  (right edge))
+  idir = 1
+  iface = 2
+  !! qf = ql
+  !! qc = qr  
+  CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &                
+                ql,qr,auxl,auxr,amdq,apdq)
 
 
   !!
