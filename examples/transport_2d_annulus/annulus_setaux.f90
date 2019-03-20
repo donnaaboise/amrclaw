@@ -106,7 +106,9 @@ endif
         DO j = 1-mbc,my+mbc
            !! # x-face and y-face edge lengths (6,7)
            aux(6,i,j) = edgelengths(i,j,1)/dy
-           aux(7,i,j) = edgelengths(i,j,2)/dx
+           aux(7,i,j) = edgelengths(i+1,j,1)/dy
+           aux(8,i,j) = edgelengths(i,j,2)/dx
+           aux(9,i,j) = edgelengths(i,j+1,2)/dx
         ENDDO
      ENDDO
   ENDIF
@@ -194,9 +196,8 @@ SUBROUTINE annulus46_set_center_velocities(mx,my,mbc, &
         xc = xlower + (i-0.5)*dx
         yc = ylower + (j-0.5)*dy
 
-        !! CALL annulus_transform_coordinates(xc1,yc1,x,y,mapping)
-
-        CALL annulus_center_velocity(xc,yc,vel)
+        CALL annulus_transform_coordinates(xc,yc,x,y,mapping)
+        CALL annulus_center_velocity(x,y,vel)
 
         !! # Subtract out component in the normal direction
         DO k = 1,3
@@ -225,7 +226,6 @@ SUBROUTINE annulus46_set_center_velocities(mx,my,mbc, &
         aux(3,i,j) = urrot
         aux(4,i,j) = ubrot
         aux(5,i,j) = utrot
-!!        write(6,*) vel(1), vel(2), vel(3)
      ENDDO
   ENDDO
 END SUBROUTINE annulus46_set_center_velocities

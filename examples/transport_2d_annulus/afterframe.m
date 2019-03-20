@@ -33,9 +33,10 @@ end
 % colorbar;
 caxis(ca)
 
-caxis([-1,1]*1e-12);
+% caxis([-1,1]*1e-12);
 % axis([-1,0,-1,0])
-showgridlines
+caxis(ca)
+hidegridlines
 
 %
 NoQuery = 0;

@@ -97,7 +97,6 @@ c         # Vector field defined as u1*tau1 + u2*tau2
               vel(k) = u(1)*t1(k) + u(2)*t2(k)
           enddo
       endif
-c      write(6,*) use_stream, example, vel(1), vel(2), vel(3)
 
       end
 

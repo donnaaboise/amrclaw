@@ -2,13 +2,13 @@ c      subroutine rpn2cons_fw_manifold(ixy,maxm,meqn,mwaves,mbc,
 c     &         mx,ql,qr,auxl,auxr,wave,s,amdq,apdq)
       subroutine rpn2cons_fw_manifold(ixy,maxm,meqn,mwaves,maux,mbc,
      &                            mx,ql,qr,
-     &                            auxl,auxr,wave,s,amdq,apdq)
+     &                            auxl,auxr,fwave,s,amdq,apdq)
       implicit none
 
       integer maxm, mbc,mwaves,meqn,maux, mx
       integer ixy
 
-      double precision wave(meqn,mwaves, 1-mbc:maxm+mbc)   
+      double precision fwave(meqn,mwaves, 1-mbc:maxm+mbc)   
       double precision    s(mwaves,1-mbc:maxm+mbc)
       double precision   ql(meqn,1-mbc:maxm+mbc)
       double precision   qr(meqn,1-mbc:maxm+mbc)
@@ -34,7 +34,9 @@ c     # Must use edge velocities
 
       idir = ixy-1
       do i = 2-mbc, mx+mbc
-         g = auxl(6+idir,i)  !! Edge length
+         !! Edge length;  assumes that edge length is stored at the 
+         !! left edge.
+         g = auxl(6 + 2*idir,i)  
 
 c        # left-right : 2,3
 c        # top-bottom : 4,5         
@@ -54,11 +56,9 @@ c        # Use Roe-average values
             amdq(1,i) = urrot*qrr - ulrot*qll
             apdq(1,i) = 0.d0
          endif
-         wave(1,1,i) = urrot*qrr - ulrot*qll
+         fwave(1,1,i) = urrot*qrr - ulrot*qll
          s(1,i) = uhat
-c         write(6,*) ulrot, urrot
       enddo
-c      stop
 
 
       return

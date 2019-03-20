@@ -27,9 +27,9 @@ def setrun(claw_pkg='amrclaw'):
     # -------------------------------------------------
 
     refine_threshold = -1      # Refine everywhere that is allowed
-    dt_initial = 2e-3          # Stable for level 1
-    nout = 20
-    nsteps = 1
+    dt_initial = 5e-4          # Stable for level 1
+    nout = 2000
+    nsteps = 250 
     regrid_interval = 10000    # Don't regrid
 
     maxlevel = 2
@@ -46,7 +46,7 @@ def setrun(claw_pkg='amrclaw'):
 
     # Example 0 : Rigid body rotation 
     # Example 1 : Velocity field = vertical_speed*(0,1)
-    example = 1
+    example = 0
 
     color_equation = 0
     if color_equation:
@@ -55,14 +55,14 @@ def setrun(claw_pkg='amrclaw'):
         use_fwaves = False
     else:
         use_stream = 0
-        maux = 7
+        maux = 9
         use_fwaves = True
 
     refine_pattern = 1       # 0 = constant theta;  1 = constant_r
 
     initial_condition = 1    # 0 = discontinuous; 1 = smooth; 2 = constant
 
-
+    mapping = 1     # 0 = regular annulus; 1 = twisted annulus
 
     #------------------------------------------------------------------
     # Problem-specific parameters to be written to setprob.data:
@@ -71,11 +71,12 @@ def setrun(claw_pkg='amrclaw'):
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
 
     # example 0 : Rigid body rotation (possibly using a streamfunction)
+    # Make vertical speed small so we leave grid
     probdata.add_param('example',                example,           'example')
-    probdata.add_param('mapping',                0,                 'mapping')
+    probdata.add_param('mapping',                mapping,           'mapping')
     probdata.add_param('initial condition',      initial_condition, 'initchoice')
     probdata.add_param('revolutions per second', 0.5,               'rps')
-    probdata.add_param('vertical speed',         2.0,               'vert_speed')
+    probdata.add_param('vertical speed',         0.1,               'vert_speed')
     probdata.add_param('initial radius',         0.125,             'init_radius')
     probdata.add_param('color equation',         color_equation,    'color_equation')
     probdata.add_param('use stream function',    use_stream,        'use_stream')
@@ -172,7 +173,7 @@ def setrun(claw_pkg='amrclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'vanleer'  ==> van Leer
     #   4 or 'mc'       ==> MC limiter
-    clawdata.limiter = ['none']
+    clawdata.limiter = ['vanleer']
 
     clawdata.use_fwaves = use_fwaves    # True ==> use f-wave version of algorithms
 
@@ -216,7 +217,7 @@ def setrun(claw_pkg='amrclaw'):
 
         # Increase number of steps taken.
         clawdata.total_steps = nout*refine_factor
-        clawdata.output_step_interval = nout*refine_factor
+        clawdata.output_step_interval = nsteps*refine_factor
 
     # Refinement threshold
     amrdata.flag2refine_tol = refine_threshold  # tolerance used in this routine
@@ -247,12 +248,9 @@ def setrun(claw_pkg='amrclaw'):
     # ----------------------------------------------------------------
 
     if color_equation:
-        amrdata.aux_type = ['capacity', 
-                            'xleft', 'yleft']
+        amrdata.aux_type = ['capacity'] + ['xleft']*2
     else:
-        amrdata.aux_type = ['capacity', 
-                            'center','center','center','center',
-                            'xleft','yleft']
+        amrdata.aux_type = ['capacity'] + ['center']*8
 
 
     #  ----- For developers -----

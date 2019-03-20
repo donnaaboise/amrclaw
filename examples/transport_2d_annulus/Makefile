@@ -65,6 +65,7 @@ SOURCES = \
   rpt2cons_manifold.f \
   rpn2adv_manifold.f \
   rpt2adv_manifold.f \
+  rpn2_qad.f \
   rpn2.f \
   rpt2.f
 

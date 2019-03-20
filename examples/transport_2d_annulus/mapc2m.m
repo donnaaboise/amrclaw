@@ -1,6 +1,6 @@
 function [xp,yp,zp] = mapc2m(xc,yc)
 
-map = 'annulus';
+map = 'twisted_annulus';
 
 switch map
     case 'annulus'
@@ -15,11 +15,9 @@ b = @(x,y) L(2,1)*x + L(2,2)*y;
 
 beta = 0.2;
 
-isflat = true;
-s = 0.0;
-[xp,yp,zp] = mapc2m_annulus(xc,yc,beta);
-
-%xp = a(xc1,yc1);
-%yp = b(xc1,yc1);
+[xp,yp,zp] = mapc2m_annulus(a(xc,yc),b(xc,yc),beta);
+% xp = a(xc,yc);
+% yp = b(xc,yc);
+% zp = 0*xp;
 
 end

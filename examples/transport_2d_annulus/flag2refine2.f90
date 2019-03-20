@@ -122,7 +122,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             if(amrflags(i,j) == UNSET) then
                 r = beta + (1-beta)*y_c
                 th = pi2*x_c
-                constant_theta = cos(th) .lt. 0 .and. abs(sin(th)) .lt. 0.5
+!!                constant_theta = cos(th) .lt. 0 .and. abs(sin(th)) .lt. 0.5
+                constant_theta = pi .le. th .and. th .le. 1.25*pi
                 constant_r = r > ravg                
                 if (refine_pattern .eq. 0 .and. constant_theta) then 
                     amrflags(i,j) = DOFLAG

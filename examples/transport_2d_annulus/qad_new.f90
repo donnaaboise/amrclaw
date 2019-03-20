@@ -80,10 +80,10 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   DOUBLE PRECISION tgrid
   INTEGER nc, nr, level, index, l
-  INTEGER i,j,ma,lind, ncrse, ic, jc, ifine, jfine, influx
+  INTEGER i,j,ma,lind, ncrse, ic, jc, ifine, jfine
   INTEGER iaux
 
-  INTEGER mx,my,mbc,meqn, mxc, myc, mq, ladd
+  INTEGER mx,my,mbc,meqn, mxc, myc, mq
   DOUBLE PRECISION dt, dx, dy, delta_fix
   integer iface, idir
   logical prt
@@ -119,13 +119,6 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! Counter for indexing into 1d arrays of coarse grid values 
   index = 0
 
-  !! Counter for saving fluxes
-  influx = 0
-
-  !! Added to index for left states.  Needed so that rpn2 interprets
-  !! ql and qr correctly.
-  ladd = 1
-
   !! --------
   !!  side 1
   !! --------
@@ -137,16 +130,16 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
            IF (auxtype(ma) .EQ. "xleft") THEN
               !! # Assuming velocity at left-face, this fix
               !! # preserves conservation in incompressible flow:
-              auxl(ma,j+ladd) = aux(ma,1,j)
+              auxl(ma,j) = aux(ma,1,j)
            ELSE
               !! # Normal case -- we set the aux arrays
               !! # from the cell corresponding  to q
-              auxl(ma,j+ladd) = aux(ma,0,j)
+              auxl(ma,j) = aux(ma,0,j)
            ENDIF
         ENDDO
      ENDIF
      DO mq = 1,meqn
-        ql(mq,j+ladd) = q(mq,0,j)
+        ql(mq,j) = q(mq,0,j)
      ENDDO
   ENDDO
 
@@ -165,37 +158,15 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
 
 
-!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
-
-  prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
-  prt = .false.
-  if (prt) then
-      do j = my/2,my/2+10
-          write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
-      end do
-      write(6,*) ' '
-  endif
-
-100 format(I5,2E16.8)
-
 
   !! side 1 (iface = 0)
-  idir = 0
-  iface = 0
   !! qf = ql
   !! qc = qr
+
+  idir = 0
+  iface = 0
   CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
                 ql,qr,auxl,auxr,amdq,apdq)
-
-  if (prt) then
-      do j = my/2, my/2 + 10
-         write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
-      end do
-      write(6,*) ' '
-      write(6,*) ' '
-   endif
 
 
   !!
@@ -206,17 +177,12 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      DO l = 1,lratioy
         jfine = (jc-1)*lratioy + l
         DO  mq = 1,meqn
-           !! This should equal a jump in fluxes across the interface.  Not clear
-           !! that it does in the mapped grid case.
            delta_fix = amdq(mq,jfine) + apdq(mq,jfine)
-           svdflx(mq,influx+jc) = svdflx(mq,influx+jc) + dy*dt*delta_fix
-!!                + amdq(mq,jfine + 1) * dy * dt &
-!!                + apdq(mq,jfine + 1) * dy * dt
+           svdflx(mq,index+jc) = svdflx(mq,index+jc) + dy*dt*delta_fix
         ENDDO
      ENDDO
   ENDDO
   index  = myc
-  influx = myc
 
   !! --------
   !!  side 2
@@ -248,27 +214,24 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         IF (maux .GT. 0) THEN
            DO  ma = 1,maux
               IF (auxtype(ma) .EQ. "yleft") THEN
-                 auxl(ma,ifine + ladd) = aux(ma,ifine,my+1)
+                 auxl(ma,ifine) = aux(ma,ifine,my+1)
               ELSE
-                 auxl(ma,ifine + ladd) = auxc1d(ma,index + ic)
+                 auxl(ma,ifine) = auxc1d(ma,index + ic)
               ENDIF
            ENDDO
         ENDIF
         DO  mq = 1,meqn
-           ql(mq,ifine+ladd) = qc1d(mq,index + ic)
+           ql(mq,ifine) = qc1d(mq,index + ic)
         ENDDO
      ENDDO
   ENDDO
 
-!!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
-
   !! side 2 (iface = 4  (top edge))
-  idir = 1
-  iface = 3
   !! qf = qr
   !! qc = ql
+
+  idir = 1
+  iface = 3
   CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
                 qr,ql,auxr,auxl,amdq,apdq)
 
@@ -279,14 +242,11 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         ifine = (ic-1)*lratiox + l
         DO mq = 1,meqn
            delta_fix = amdq(mq,ifine) + apdq(mq,ifine)
-           svdflx(mq,influx+ic) = svdflx(mq,influx+ic) - dx*dt*delta_fix
-!!                - amdq(mq,ifine + 1) * dx * dt &
-!!                - apdq(mq,ifine + 1) * dx * dt
+           svdflx(mq,index+ic) = svdflx(mq,index+ic) + dx*dt*delta_fix
         ENDDO
      ENDDO
   ENDDO
   index  = index + mxc
-  influx = influx + mxc
 
 299 continue
 
@@ -313,48 +273,27 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
               IF (auxtype(ma).EQ."xleft") THEN
-                 auxl(ma,jfine+ladd) = aux(ma,mx+1,jfine)
+                 auxl(ma,jfine) = aux(ma,mx+1,jfine)
               ELSE
-                 auxl(ma,jfine+ladd) = auxc1d(ma,index + jc)
+                 auxl(ma,jfine) = auxc1d(ma,index + jc)
               ENDIF
            ENDDO
         ENDIF
         DO mq = 1, meqn
-           ql(mq,jfine+ladd) = qc1d(mq,index + jc)
+           ql(mq,jfine) = qc1d(mq,index + jc)
         ENDDO
      ENDDO
   ENDDO
 
-!!  CALL rpn2(1,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!            my+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
-
-  prt = abs(amdq(1,my/2) + apdq(1,my/2)) .gt. 1e-12
-  prt = .false.
-  if (prt) then
-      do j = my/2,my/2+10
-          write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
-      end do
-      write(6,*) ' '
-  endif
-
 
   !! side 3 (iface = 1  (right edge))
-  idir = 0
-  iface = 1
   !! qf = qr
   !! qc = ql
+
+  idir = 0
+  iface = 1
   CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
                 qr,ql,auxr,auxl,amdq,apdq)
-
-  if (prt) then
-      do j = my/2, my/2 + 10
-         write(6,100) j, amdq(1,j+1) + apdq(1,j+1)
-      end do
-      write(6,*) ' '
-      stop
-   endif
-
 
 
   !!
@@ -365,14 +304,11 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         jfine = (jc-1)*lratioy + l
         DO mq = 1, meqn
            delta_fix = amdq(mq,jfine) + apdq(mq,jfine)
-           svdflx(mq,influx + jc) = svdflx(mq,influx + jc) - dy*dt*delta_fix
-!!                - amdq(mq,jfine + 1) * dy * dt &
-!!                - apdq(mq,jfine + 1) * dy * dt
+           svdflx(mq,index + jc) = svdflx(mq,index + jc) - dy*dt*delta_fix
         ENDDO
      ENDDO
   ENDDO
   index  = index + myc
-  influx = influx + myc
 
   !! --------
   !!  side 4
@@ -391,14 +327,15 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         !! Is this conditional needed?  Loop won't do anything if maux == 0
         DO ma = 1,maux
            IF (auxtype(ma) .EQ. "yleft") THEN
-              auxl(ma,i+ladd) = aux(ma,i,1)
+              !! But this left edge may not coincide with the coarse grid left edge              
+              auxl(ma,i) = aux(ma,i,1)
            ELSE
-              auxl(ma,i+ladd) = aux(ma,i,0)
+              auxl(ma,i) = aux(ma,i,0)
            ENDIF
         ENDDO
      ENDIF
      DO mq = 1, meqn
-        ql(mq,i+ladd) = q(mq,i,0)
+        ql(mq,i) = q(mq,i,0)
      ENDDO
   ENDDO
 
@@ -416,14 +353,12 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      ENDDO
   ENDDO
 
-!!  CALL rpn2(2,max1dp1-2*mbc,meqn,mwaves,maux,mbc, &
-!!            mx+1-2*mbc,ql,qr,auxl,auxr,wave,s,amdq,apdq)
-
   !! side 4 (iface = 2  (right edge))
-  idir = 1
-  iface = 2
   !! qf = ql
   !! qc = qr  
+
+  idir = 1
+  iface = 2
   CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &                
                 ql,qr,auxl,auxr,amdq,apdq)
 
@@ -436,9 +371,7 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
         ifine = (ic-1)*lratiox + l
         DO mq = 1,meqn
            delta_fix = amdq(mq,ifine) + apdq(mq,ifine)
-           svdflx(mq,influx + ic) = svdflx(mq,influx + ic) + dx*dt*delta_fix
-!!                + amdq(mq,ifine + 1) * dx * dt &
-!!                + apdq(mq,ifine + 1) * dx * dt
+           svdflx(mq,index + ic) = svdflx(mq,index + ic) + dx*dt*delta_fix
         ENDDO
      ENDDO
   ENDDO
