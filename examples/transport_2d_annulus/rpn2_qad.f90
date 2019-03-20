@@ -24,26 +24,24 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
   DO i = 1,mx
     if (iface .eq. 0 .or. iface .eq. 2) then
         do m = 1,maux
-            auxvf_center(m) = auxf(m,i+1)
+            auxvf_center(m) = auxf(m,i)
             auxvc_center(m) = auxc(m,i)
         end do
 
         do m = 1,meqn
-            qvf(m) = qf(m,i+1)
+            qvf(m) = qf(m,i)
             qvc(m) = qc(m,i)
         end do
-        sgn = 1
     else
         do m = 1,maux
             auxvf_center(m) = auxf(m,i)
-            auxvc_center(m) = auxc(m,i+1)
+            auxvc_center(m) = auxc(m,i)
         end do
 
         do m = 1,meqn
             qvf(m) = qf(m,i)
-            qvc(m) = qc(m,i+1)
+            qvc(m) = qc(m,i)
         end do
-        sgn = -1
     endif
 
 
@@ -59,8 +57,8 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
 
     do m = 1,meqn
         fd = fluxf(m) - fluxc(m)
-        apdq(m,i) = sgn*0.5*fd  
-        amdq(m,i) = sgn*0.5*fd
+        apdq(m,i) = 0.5*fd  
+        amdq(m,i) = 0.5*fd
     end do
 
   ENDDO
