@@ -60,12 +60,12 @@ SOURCES = \
   annulus_setaux.f90 \
   flag2refine2.f90 \
   qad_new.f90 \
+  rpn2_qad.f \
   fclaw2d_metric_default_fort.f \
   rpn2cons_fw_manifold.f \
   rpt2cons_manifold.f \
   rpn2adv_manifold.f \
   rpt2adv_manifold.f \
-  rpn2_qad.f \
   rpn2.f \
   rpt2.f
 

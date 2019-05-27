@@ -69,7 +69,7 @@ c     # average inner and outer radii to center sphere
       r0 = init_radius
       ravg = (1 + beta)/2.d0
       x0 = -ravg
-      y0 = 0.0
+      y0 = 0
 
       r = sqrt((xp - x0)**2 + (yp - y0)**2)
       q0 = Hsmooth(r + r0) - Hsmooth(r - r0)

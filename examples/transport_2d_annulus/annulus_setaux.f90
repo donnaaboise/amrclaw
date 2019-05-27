@@ -105,10 +105,10 @@ endif
      DO i = 1-mbc,mx+mbc
         DO j = 1-mbc,my+mbc
            !! # x-face and y-face edge lengths (6,7)
-           aux(6,i,j) = edgelengths(i,j,1)/dy
-           aux(7,i,j) = edgelengths(i+1,j,1)/dy
-           aux(8,i,j) = edgelengths(i,j,2)/dx
-           aux(9,i,j) = edgelengths(i,j+1,2)/dx
+           aux(6,i,j) = edgelengths(i,  j,  1)/dy
+           aux(7,i,j) = edgelengths(i+1,j,  1)/dy
+           aux(8,i,j) = edgelengths(i,  j,  2)/dx
+           aux(9,i,j) = edgelengths(i,  j+1,2)/dx
         ENDDO
      ENDDO
   ENDIF
@@ -200,11 +200,11 @@ SUBROUTINE annulus46_set_center_velocities(mx,my,mbc, &
         CALL annulus_center_velocity(x,y,vel)
 
         !! # Subtract out component in the normal direction
-        DO k = 1,3
-           nv(k) = surfnormals(i,j,k)
-        ENDDO
+!!        DO k = 1,3
+!!           nv(k) = surfnormals(i,j,k)
+!!        ENDDO
 
-        vdotn = annulus_dot(vel,nv)
+!!        vdotn = annulus_dot(vel,nv)
 
         DO k = 1,3
 !!           vel(k) = vel(k) - vdotn*nv(k)

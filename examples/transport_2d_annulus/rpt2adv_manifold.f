@@ -18,12 +18,25 @@ c     &      imp,asdq,bmasdq,bpasdq)
 
       integer iface, i, i1
 
-      iface = 3-ixy  !#  = 1 if ixy=2  or  = 2 if ixy=1
+c     # ixy = 1 : Normal solve is in x direction; Transverse is in y dir.   
+c     #           so we need y face values for transverse solve   
+c     # ixy = 2 : Normal solve is in y direction; Transverse is in x dir.      
+c     #           so we need x face values for transverse solve   
+
+c     # (1,2), (2,0) --> iface = (2/-1)*(ixy-2) = 2*(2-ixy)
+
+c     # iface = 2*(2-ixy)
+      if (ixy .eq. 1) then
+         iface = 2  !! Bottom edge
+      else
+         iface = 0  !! left edge
+      endif
+
       do i = 2-mbc,mx+mbc
          i1 = i-2+imp    !#  =  i-1 for amdq,  i for apdq
          do m = 1,meqn
-            bmasdq(m,i) = min(aux2(iface+1,i1), 0.d0) * asdq(m,i)
-            bpasdq(m,i) = max(aux3(iface+1,i1), 0.d0) * asdq(m,i)
+            bmasdq(m,i) = min(aux2(1+iface,i1), 0.d0) * asdq(m,i)
+            bpasdq(m,i) = max(aux3(1+iface,i1), 0.d0) * asdq(m,i)
          enddo
       enddo
 

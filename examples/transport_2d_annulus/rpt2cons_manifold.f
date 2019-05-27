@@ -19,27 +19,37 @@ c     &                       bmasdq,bpasdq)
       double precision   aux3(maux,1-mbc:maxm+mbc)
 
 
-      integer i, i1, k, idir
+      integer i, i1, k, idir, iface
       double precision vrrot, vlrot, g, vhat
 
 c     # ixy = 1 --> idir = 1
 c     # ixy = 2 --> idir = 0
       idir = 2-ixy
 
+c     # iface = 2*(2-ixy)
+      if (ixy .eq. 1) then
+         iface = 2  !! Bottom edge
+      else
+         iface = 0  !! left edge
+      endif
+
       do i = 2-mbc, mx+mbc
-          i1 = i-2+imp    !#  =  i-1 for amdq,  i for apdq
+c         # imp = 1 : i-1   (for apdq)
+c         # imp = 2 : i     (for apdq)
+          i1 = i-2+imp   
 
 c         # -----------------------------------------
 c         # Lower faces - cell centered velocities
 c         # -----------------------------------------
            
-c         # 6-7    Edge lengths (x-face, y-face)
-          g = aux2(6+idir,i1)
+c         # 6-7 (left-right)
+c         # 8-9 (bottom-top)
+          g = aux2(6 + 2*idir,i1)
 
 c         # left-right : 2,3
-c         # top-bottom : 4,5         
-          vrrot = g*aux2(2 + 2*idir,i)   !! Left edge of right cell
-          vlrot = g*aux2(3 + 2*idir,i-1)   !! Right edge of left cell
+c         # bottom-top : 4,5         
+          vrrot = g*aux2(2 + 2*idir,i1)   !! Left edge of right cell
+          vlrot = g*aux1(3 + 2*idir,i1)   !! Right edge of left cell
 
           vhat = (vrrot + vlrot)/2.0
 
@@ -49,12 +59,12 @@ c         # -----------------------------------------
 c         # Upper faces - cell centered velocities
 c         # -----------------------------------------
 
-          g = aux3(6+idir,i1)
+          g = aux3(6+2*idir,i1)
 
 c         # left-right : 2,3
-c         # top-bottom : 4,5         
-          vrrot = g*aux3(2 + 2*idir,i)   !! Left edge of right cell
-          vlrot = g*aux3(3 + 2*idir,i-1)   !! Right edge of left cell
+c         # bottom-top : 4,5         
+          vrrot = g*aux3(2 + 2*idir,i1)   !! Left edge of right cell
+          vlrot = g*aux2(3 + 2*idir,i1)   !! Right edge of left cell
 
           vhat = (vrrot + vlrot)/2.0
 

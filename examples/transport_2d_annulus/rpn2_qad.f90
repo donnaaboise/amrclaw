@@ -9,6 +9,9 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
   DOUBLE PRECISION amdq(meqn,mx)  
   DOUBLE PRECISION apdq(meqn,mx)
 
+!!  # Must use edge velocities
+  integer color_equation
+  common /eqn_comm/ color_equation
 
   !! automatically allocated
   DOUBLE PRECISION qvc(meqn), qvf(meqn)
@@ -22,38 +25,31 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
   !! iface refers to the face of the Cartesian grid
 
   DO i = 1,mx
-    if (iface .eq. 0 .or. iface .eq. 2) then
-        do m = 1,maux
-            auxvf_center(m) = auxf(m,i)
-            auxvc_center(m) = auxc(m,i)
-        end do
+    do m = 1,maux
+        auxvf_center(m) = auxf(m,i)
+        auxvc_center(m) = auxc(m,i)
+    end do
 
-        do m = 1,meqn
-            qvf(m) = qf(m,i)
-            qvc(m) = qc(m,i)
-        end do
-    else
-        do m = 1,maux
-            auxvf_center(m) = auxf(m,i)
-            auxvc_center(m) = auxc(m,i)
-        end do
-
-        do m = 1,meqn
-            qvf(m) = qf(m,i)
-            qvc(m) = qc(m,i)
-        end do
-    endif
+    do m = 1,meqn
+        qvf(m) = qf(m,i)
+        qvc(m) = qc(m,i)
+    end do
 
 
     !! Compute flux in fine grid ghost cell at left edge of grid
     if (idir .eq. 0) then
         iface_cell = 1-iface    !! Left edge of Cartesian grid is right edge of ghost cell
     else
-        iface_cell = 5-iface   !! swap bottom and top edges
+        iface_cell = 5-iface    !! swap bottom and top edges
     endif
 
-    call rpn2_cons_update_manifold(meqn,maux,idir,iface_cell,qvf,auxvf_center,fluxf)
-    call rpn2_cons_update_manifold(meqn,maux,idir,iface_cell,qvc,auxvc_center,fluxc)
+    if (color_equation .eq. 0) then
+        call rpn2_cons_update_manifold(meqn,maux,idir,iface_cell,qvf,auxvf_center,fluxf)
+        call rpn2_cons_update_manifold(meqn,maux,idir,iface_cell,qvc,auxvc_center,fluxc)
+    else
+        call rpn2_cons_update_zero(meqn,maux,idir,iface_cell,qvf,auxvf_center,fluxf)
+        call rpn2_cons_update_zero(meqn,maux,idir,iface_cell,qvc,auxvc_center,fluxc)
+    endif        
 
     do m = 1,meqn
         fd = fluxf(m) - fluxc(m)
@@ -97,15 +93,15 @@ SUBROUTINE  rpn2_cons_update_manifold(meqn,maux,   &
 
 END SUBROUTINE rpn2_cons_update_manifold
 
-SUBROUTINE  rpn2_cons_update_zero(meqn,maux, idir, iface, q,  &
-     auxvec_center,  &
-     auxvec_edge,flux)
+SUBROUTINE  rpn2_cons_update_zero(meqn,maux,   &
+                                  idir, iface, q,  &
+                                  auxvec_center,  flux)
 
   IMPLICIT NONE
-
   INTEGER meqn,maux,idir, iface
   DOUBLE PRECISION q(meqn), flux(meqn)
-  DOUBLE PRECISION auxvec_center(maux), auxvec_edge(maux)
+  DOUBLE PRECISION auxvec_center(maux)
+
   INTEGER m
 
   !! #  f(q) = (n dot u)*q

@@ -1,5 +1,3 @@
-c      subroutine rpn2cons_fw_manifold(ixy,maxm,meqn,mwaves,mbc,
-c     &         mx,ql,qr,auxl,auxr,wave,s,amdq,apdq)
       subroutine rpn2cons_fw_manifold(ixy,maxm,meqn,mwaves,maux,mbc,
      &                            mx,ql,qr,
      &                            auxl,auxr,fwave,s,amdq,apdq)
@@ -21,17 +19,6 @@ c     &         mx,ql,qr,auxl,auxr,wave,s,amdq,apdq)
       double precision qll,qrr
       double precision urrot, ulrot, g, uhat
 
-c     # Must use edge velocities
-      integer color_equation
-      common /eqn_comm/ color_equation
-
-      if (color_equation .ne. 0) then
-         write(6,*) 'rpn2_fw_manifold : Color equation requires',
-     &       ' edge velocities'
-         stop
-      endif
-
-
       idir = ixy-1
       do i = 2-mbc, mx+mbc
          !! Edge length;  assumes that edge length is stored at the 
@@ -39,7 +26,7 @@ c     # Must use edge velocities
          g = auxl(6 + 2*idir,i)  
 
 c        # left-right : 2,3
-c        # top-bottom : 4,5         
+c        # bottom-top : 4,5         
          urrot = g*auxl(2 + 2*idir,i)     !! Left edge of right cell
          ulrot = g*auxr(3 + 2*idir,i-1)   !! Right edge of left cell
 

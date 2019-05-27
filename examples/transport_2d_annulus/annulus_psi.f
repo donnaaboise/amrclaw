@@ -138,7 +138,7 @@ c      yp = r*sin(2*pi*xc)
 c     # Set non-zeros derivs only
       if (example .eq. 0) then
 c        # Rigid body rotation        
-         u(1) = 1
+         u(1) = revs_per_s
          u(2) = 0
       elseif (example .eq. 1) then
 c        # Vertical velocity
@@ -346,8 +346,13 @@ c             # d(t2)/dy = d(g*fy + gy*f)/dy
       integer mapping
       double precision l0(4), l1(4)
 
+      double precision twist
+      common /twist_comm/ twist      
+
       data l0 /1., 0., 0., 1./
-      data l1 /1., -0.2d0, 0., 1./
+      data l1 /1., -999., 0., 1./
+
+      l1(2) = twist
 
 c     # This compute (x,y) from a1*t1 + a2*t2, where
 c     # t1, t2 are the columns of the matrix L.

@@ -22,6 +22,9 @@ c     beta_in
       integer mapping
       common /mapping_comm/ mapping
 
+      double precision twist
+      common /twist_comm/ twist
+
       integer initchoice
       common /initchoice_comm/ initchoice
 
@@ -59,6 +62,7 @@ c     # used only for edge velocities
       read(iunit,*) mapping
       read(iunit,*) initchoice
       read(iunit,*) revs_per_s
+      read(iunit,*) twist
       read(iunit,*) vertical_speed
       read(iunit,*) init_radius    !! radius
       read(iunit,*) color_equation

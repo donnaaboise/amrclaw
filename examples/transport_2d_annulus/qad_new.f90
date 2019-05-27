@@ -88,6 +88,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   integer iface, idir
   logical prt
 
+!!  return 
+
   tgrid = rnode(timemult, mptr)
   nr = mitot-2*nghost
   nc = mjtot-2*nghost
