@@ -23,12 +23,9 @@ c     # Must use edge velocities
      &               mbc,mx,ql,qr,
      &               aux1,aux2,aux3,asdq,bmasdq,bpasdq)
       else
-         call annulus46_rpt2adv_manifold(ixy,maxm,meqn,
-     &       mwaves,mbc,mx,ql,qr,aux1,aux2,aux3,
-     &       imp,asdq,bmasdq,bpasdq,maux)
-c         call rpt2cons_manifold(ixy,imp,maxm,meqn,mwaves,maux,
-c     &               mbc,mx,ql,qr,
-c     &               aux1,aux2,aux3,asdq,bmasdq,bpasdq)
+         call rpt2cons_manifold(ixy,imp,maxm,meqn,mwaves,maux,
+     &               mbc,mx,ql,qr,
+     &               aux1,aux2,aux3,asdq,bmasdq,bpasdq)
       endif
 
 

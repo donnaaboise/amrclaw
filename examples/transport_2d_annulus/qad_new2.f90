@@ -148,7 +148,7 @@ SUBROUTINE qad_new2(valbig,mitot,mjtot,nvar, &
   ENDDO
 
   idir = 0
-  iface = 0
+  iface = 0    !! Face of Cartesian grid
   CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
                 qf,qc,auxf,auxc,amdq,apdq)
 

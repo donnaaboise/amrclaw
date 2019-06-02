@@ -71,7 +71,7 @@ def setrun(claw_pkg='amrclaw'):
 
     rps   = -0.5
 
-    qad_mode = 0          # 0 = no qad; 1 = original qad;  2 = new qad
+    qad_mode = 1          # 0 = no qad; 1 = original qad;  2 = new qad
 
     f = open('twist.dat','w')
     f.write('{:f}'.format(twist))

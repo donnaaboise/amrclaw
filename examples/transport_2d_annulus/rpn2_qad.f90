@@ -36,9 +36,13 @@ SUBROUTINE rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
     end do
 
 
-    !! Compute flux in fine grid ghost cell at left edge of grid
+    !! Get face relative to ghost cell
+    !! Left face of Cartesian grid --> right edge of ghost cell
+    !! Right face of Cartesian grid --> left edge of ghost cell
+    !! Bottom face of Cartesian grid --> top edge of ghost cell
+    !! Top face of Cartesian grid --> bottom edge of ghost cell
     if (idir .eq. 0) then
-        iface_cell = 1-iface    !! Left edge of Cartesian grid is right edge of ghost cell
+        iface_cell = 1-iface    !! Swap left and right edges
     else
         iface_cell = 5-iface    !! swap bottom and top edges
     endif
@@ -80,19 +84,13 @@ SUBROUTINE  rpn2_cons_update_manifold(meqn,maux,   &
   !! # 'iface' (in 0,1,2,3)
 
   urot = auxvec_center(2+iface)
-  if (iface .eq. 3) then
-    if (abs(urot) .gt. 1e-8) then
-!!        write(6,*) 'urot = ', urot
-    endif
-  endif
 
-  !! Scaling for fluxes (since this is supposed to look like a scaled apdq, amdq)
+  !! This is why we need all four edge lengths available here
   g = auxvec_center(6+iface)  !! Edge length
 
 
-  !! #  f(q) = (n dot u)*q
   DO m = 1,meqn
-     !! # Don't multiply by edgelength (scaling is done elsewhere)
+     !! # Scaling done here (unlike in ForestClaw)    
      flux(m) = g*urot*q(m)
   ENDDO
 

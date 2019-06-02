@@ -43,13 +43,13 @@ c     # Idir is direction of transverse solve
 
          idx = imp - 2
          if (ixy .eq. 1) then
-            gm = aux2(8,i1)
-            gp = aux3(9,i1)
+            gm = aux2(8,i1)   
+            gp = aux3(8,i1)
             vm = gm*(face_data(idx,-1,3) + face_data(idx,0,2))/2.d0
             vp = gp*(face_data(idx, 0,3) + face_data(idx,1,2))/2.d0
          else
             gm = aux2(6,i1)
-            gp = aux3(7,i1)
+            gp = aux3(6,i1)
             vm = gm*(face_data(-1,idx,1) + face_data(0,idx,0))/2.d0
             vp = gp*(face_data( 0,idx,1) + face_data(1,idx,0))/2.d0
          endif

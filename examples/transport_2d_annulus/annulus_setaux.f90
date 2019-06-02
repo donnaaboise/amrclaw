@@ -104,7 +104,8 @@ endif
      !! # cell-centered velocities
      DO i = 1-mbc,mx+mbc
         DO j = 1-mbc,my+mbc
-           !! # x-face and y-face edge lengths (6,7)
+           !! Need to store all four edge lengths in each cell, since they are all
+           !! needed in QAD fix.            
            aux(6,i,j) = edgelengths(i,  j,  1)/dy
            aux(7,i,j) = edgelengths(i+1,j,  1)/dy
            aux(8,i,j) = edgelengths(i,  j,  2)/dx
