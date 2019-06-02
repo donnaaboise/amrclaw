@@ -87,6 +87,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     INTEGER refine_pattern
     COMMON /refine_comm/ refine_pattern
 
+    double precision t1, t2
+
     ! Don't initialize flags, since they were already 
     ! flagged by flagregions2
     ! amrflags = DONTFLAG
@@ -122,8 +124,10 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             if(amrflags(i,j) == UNSET) then
                 r = beta + (1-beta)*y_c
                 th = pi2*x_c
-                constant_theta = cos(th) .lt. 0 .and. abs(sin(th)) .lt. 0.5
-!!                constant_theta = pi .le. th .and. th .le. 1.25*pi
+                t1 = pi - pi/8.0
+                t2 = pi + pi/8.0
+!!                constant_theta = cos(th) .lt. 0 .and. abs(sin(th)) .lt. 0.5
+                constant_theta = t1 .le. th .and. th .le. t2
                 constant_r = r > ravg                
                 if (refine_pattern .eq. 0 .and. constant_theta) then 
                     amrflags(i,j) = DOFLAG

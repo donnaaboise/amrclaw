@@ -51,6 +51,9 @@ c     # used only for edge velocities
       integer refine_pattern
       common /refine_comm/ refine_pattern
 
+      integer qad_mode
+      common /qad_comm/ qad_mode      
+
       pi = 4.d0*atan(1.d0)
       pi2 = 2*pi
 
@@ -74,6 +77,7 @@ c     # used only for edge velocities
       read(iunit,*) maxlevel
       read(iunit,*) rfactor
       read(iunit,*) refine_pattern
+      read(iunit,*) qad_mode
       close(iunit)
 
       end

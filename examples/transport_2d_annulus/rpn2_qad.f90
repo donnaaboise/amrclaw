@@ -80,8 +80,13 @@ SUBROUTINE  rpn2_cons_update_manifold(meqn,maux,   &
   !! # 'iface' (in 0,1,2,3)
 
   urot = auxvec_center(2+iface)
+  if (iface .eq. 3) then
+    if (abs(urot) .gt. 1e-8) then
+!!        write(6,*) 'urot = ', urot
+    endif
+  endif
 
-  !! Scaling for fluxes (since this is supposd to look like a scaled apdq, amdq)
+  !! Scaling for fluxes (since this is supposed to look like a scaled apdq, amdq)
   g = auxvec_center(6+iface)  !! Edge length
 
 

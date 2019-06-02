@@ -24,6 +24,8 @@ c     &      xlower,ylower,dx,dy,q,maux,aux)
       double precision pi
       common /compi/ pi
 
+      integer j1, j2
+
       blockno = 0
 
       do j = 1-mbc,my+mbc
@@ -39,7 +41,13 @@ c     &      xlower,ylower,dx,dy,q,maux,aux)
                call mapc2m_annulus(xc,yc,xp,yp,zp)
                q(1,i,j) = q0_physical(xp,yp,zp)
             else
-               q(1,i,j) = 1.d0
+               xc = xlower + (i-0.5)*dx
+               yc = ylower + (j-0.5)*dy
+               if (yc .ge. 0.25 .and. yc .le. 0.75) then
+                  q(1,i,j) = 1.d0
+               else
+                  q(1,i,j) = 0
+               endif
             endif
          enddo
       enddo

@@ -357,10 +357,6 @@ c             # d(t2)/dy = d(g*fy + gy*f)/dy
 c     # This compute (x,y) from a1*t1 + a2*t2, where
 c     # t1, t2 are the columns of the matrix L.
 
-c      x = a
-c      y = b
-
-  
       if (mapping .eq. 0) then
           x = a
           y = b

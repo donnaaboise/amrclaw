@@ -25,8 +25,8 @@ SUBROUTINE setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
   area_check = .false.
 
   !! Dimensions of brick in ForestClaw mesh
-  mi = 22
-  mj = 3
+  mi = 15
+  mj = 2
 
   !! Figure out level of current grid so we can compute areas
   !! in a conservative manner

@@ -27,23 +27,23 @@ def setrun(claw_pkg='amrclaw'):
     # -------------------------------------------------
 
     refine_threshold = -1      # Refine everywhere that is allowed
-    dt_initial = 5e-3          # Stable for level 1
-    nout = 15
-    nsteps = 1 
+    dt_initial = 1e-2          # Stable for level 1
+    nout = 5                 # 400 steps => T=2
+    nsteps = 1
     regrid_interval = 10000    # Don't regrid
 
     maxlevel = 2
     ratioxy = 2
-    ratiok = 2
+    ratiok = 1
 
     # Coarse grid
-    mi = 22        # Number of ForestClaw blocks
-    mj = 3     
-    grid_mx = 16    # Size of ForestClaw grids
+    mi = 16        # Number of ForestClaw blocks
+    mj = 2     
+    grid_mx = 8    # Size of ForestClaw grids
     mx = mi*grid_mx
     my = mj*grid_mx
 
-    limiter = 'none'    # 'none', 'minmod', 'superbee', 'vanleer', 'mc'
+    limiter = 'minmod'    # 'none', 'minmod', 'superbee', 'vanleer', 'mc'
 
     # Example 0 : Rigid body rotation 
     # Example 1 : Velocity field = vertical_speed*(0,1)
@@ -59,17 +59,19 @@ def setrun(claw_pkg='amrclaw'):
         maux = 9
         use_fwaves = True
 
-    refine_pattern = 0    # 0 = constant theta;  1 = constant_r
-    initial_choice = 1    # 0 = discontinuous;   1 = smooth; 2 = constant
+    refine_pattern = 1    # 0 = constant theta;  1 = constant_r
+    initial_choice = 0    # 0 = discontinuous;   1 = smooth; 2 = constant
 
-    mapping = 0           # 0 = regular annulus; 1 = twisted annulus
+    mapping = 1           # 0 = regular annulus; 1 = twisted annulus
 
     if mapping == 0:
         twist = 0
     else:
-        twist = -0.2
+        twist = -0.02
 
-    rps   = 0.5
+    rps   = -0.5
+
+    qad_mode = 0          # 0 = no qad; 1 = original qad;  2 = new qad
 
     f = open('twist.dat','w')
     f.write('{:f}'.format(twist))
@@ -89,15 +91,16 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('revolutions per second', rps,               'rps')
     probdata.add_param('Twist factor',           twist,             'twist')
     probdata.add_param('vertical speed',         0.1,               'vert_speed')
-    probdata.add_param('initial radius',         0.125,             'init_radius')
+    probdata.add_param('initial radius',         0.1,             'init_radius')
     probdata.add_param('color equation',         color_equation,    'color_equation')
     probdata.add_param('use stream function',    use_stream,        'use_stream')
-    probdata.add_param('beta',                   0.2,               'beta')
+    probdata.add_param('beta',                   0.4,               'beta')
 
     probdata.add_param('grid_mx',        grid_mx,        'grid_mx')
     probdata.add_param('maxlevel',       maxlevel,       'maxlevel')
     probdata.add_param('reffactor',      ratioxy,        'reffactor')
     probdata.add_param('refine_pattern', refine_pattern, 'refine_pattern')
+    probdata.add_param('qad_new',        qad_mode,       'qad_mode')
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:

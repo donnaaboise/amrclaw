@@ -33,12 +33,29 @@ if square
     axis([0,1,0,1]);
 end
 
-showgridlines(2)
+showgridlines;
 
 colormap(parula);
-ca = [-max([qmin,qmax]),max([qmin,qmax])];
-caxis(ca/1e5);
+cmax = max(abs([qmin,qmax]));
+ca = [-cmax,cmax];
+caxis(ca);
 % caxis([-1,1]*1e-12);
+
+if (square)
+    daspect([1,5,1]);
+end
+
+set(gca,'fontsize',16);
+
+% figure(2)
+% plot(ycenter,q(1,:),'.-','markersize',20);
+% hold on;
+% ylim([-1,2]);
+% shg
+% input('Hit enter to continue : ');
+
+figure(1)
+
 
 %
 NoQuery = 0;

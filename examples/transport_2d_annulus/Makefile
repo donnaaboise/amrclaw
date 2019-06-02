@@ -24,7 +24,7 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?=  -O2
+FFLAGS ?=  -O0 -g
 
 # ---------------------------------
 # package sources for this program:
@@ -59,8 +59,11 @@ SOURCES = \
   mapc2m_annulus.f \
   annulus_setaux.f90 \
   flag2refine2.f90 \
-  qad_new.f90 \
-  rpn2_qad.f \
+  qad_choice.f90 \
+  qad_original.f \
+  qad_new2.f90 \
+  rpn2_qad.f90 \
+  annulus46_rpt2adv_manifold.f \
   fclaw2d_metric_default_fort.f \
   rpn2cons_fw_manifold.f \
   rpt2cons_manifold.f \
@@ -68,6 +71,9 @@ SOURCES = \
   rpt2adv_manifold.f \
   rpn2.f \
   rpt2.f
+
+#   qad_new2.f90 \
+
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

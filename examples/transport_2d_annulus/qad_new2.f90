@@ -6,7 +6,7 @@
 !! -------------------------------------------------------------
 !!
 
-SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
+SUBROUTINE qad_new2(valbig,mitot,mjtot,nvar, &
      svdflx,qc1d,lenbc,lratiox,lratioy,hx,hy, &
      maux,auxbig,auxc1d,delt,mptr)
 
@@ -41,15 +41,10 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   !! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   !!
   !!      # local storage
-  !!      # note that dimension here are bigger than dimensions used
-  !!      # in rp2, but shouldn't matter since wave is not used in qad
-  !!      # and for other arrays it is only the last parameter that is wrong
-  !!      #  ok as long as meqn, mwaves < maxvar
 
+  !! max1d is largest possible grid size (defined in amr_module.f90)
   INTEGER max1dp1
   PARAMETER (max1dp1 = max1d+1)
-  DOUBLE PRECISION ql(nvar,max1dp1)
-  DOUBLE PRECISION qr(nvar,max1dp1)
   DOUBLE PRECISION wave(nvar,mwaves,max1dp1)
   DOUBLE PRECISION s(mwaves,max1dp1)
   DOUBLE PRECISION amdq(nvar,max1dp1)  
@@ -58,25 +53,12 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   DOUBLE PRECISION, TARGET :: auxlbig(maxaux*max1dp1)
   DOUBLE PRECISION, TARGET :: auxrbig(maxaux*max1dp1)
 
-  DOUBLE PRECISION, POINTER :: auxl(:,:)
-  DOUBLE PRECISION, POINTER :: auxr(:,:)
+  DOUBLE PRECISION, POINTER :: auxf(:,:)
+  DOUBLE PRECISION, POINTER :: auxc(:,:)
 
-  !!
-  !!  WARNING: auxl,auxr dimensioned at max possible, but used as if
-  !!  they were dimensioned as the real maux by max1dp1. Would be better
-  !!  of course to dimension by maux by max1dp1 but this wont work if maux=0
-  !!  So need to access using your own indexing into auxl,auxr.
-
-  !!  INTEGER iaddaux
-  !!  iaddaux(iaux,i) = (i-1)*maux + iaux
-
-  !!
-  !!      aux is auxiliary array with user parameters needed in Riemann solvers
-  !!          on fine grid corresponding to valbig
-  !!      auxc1d is coarse grid stuff from around boundary, same format as qc1d
-  !!      auxl, auxr are work arrays needed to pass stuff to rpn2
-  !!      maux is the number of aux variables, which may be zero.
-  !!
+  !! Temporary variables (used instead of ql,qr)
+  DOUBLE PRECISION qf(nvar,max1dp1)
+  DOUBLE PRECISION qc(nvar,max1dp1)
 
   DOUBLE PRECISION tgrid
   INTEGER nc, nr, level, index, l
@@ -85,10 +67,8 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   INTEGER mx,my,mbc,meqn, mxc, myc, mq
   DOUBLE PRECISION dt, dx, dy, delta_fix
-  integer iface, idir
-  logical prt
-
-!!  return 
+  INTEGER iface, idir
+  LOGICAL prt
 
   tgrid = rnode(timemult, mptr)
   nr = mitot-2*nghost
@@ -113,22 +93,24 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 
   if (maux .gt. 0) then
      aux(1:maux,1-mbc:mx+mbc,1-mbc:my+mbc) => auxbig
-     auxl(1:maux,1:max1dp1) => auxlbig
-     auxr(1:maux,1:max1dp1) => auxrbig
+     auxf(1:maux,1:max1dp1) => auxlbig
+     auxc(1:maux,1:max1dp1) => auxrbig
   endif
 
 
   !! Counter for indexing into 1d arrays of coarse grid values 
   index = 0
 
-  !! ------------------------------
-  !!  side 1 (iface = 0; left edge)
-  !! ------------------------------
-  !!
+  !! ----------------------------------------------
+  !!  Side 1 
+  !! ----------------------------------------------
+  !!  
+  !! iface = 0 (left edge)
+  !! 
   !! Fine grid is on the right;  coarse grid is on the left
   !!
-  !! auxl, ql : data for (l)eft edge of right (fine) cell
-  !! auxr, qr : data for (r)ight edge of left (coarse) cell
+  !! auxf, qf : data for right (fine) cell
+  !! auxc, qc : data for left (coarse) cell
   !!
 
   DO j = 1,my
@@ -137,29 +119,30 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
            IF (auxtype(ma) .EQ. "xleft") THEN
               !! # Assuming velocity at left-face, this fix
               !! # preserves conservation in incompressible flow:
-              auxl(ma,j) = aux(ma,1,j)
+              auxf(ma,j) = aux(ma,1,j)
            ELSE
               !! # Normal case -- we set the aux arrays
               !! # from the cell corresponding  to q
-              auxl(ma,j) = aux(ma,0,j)
+              auxf(ma,j) = aux(ma,0,j)
            ENDIF
         ENDDO
      ENDIF
      DO mq = 1,meqn
-        ql(mq,j) = q(mq,0,j)
+        qf(mq,j) = q(mq,0,j)
      ENDDO
   ENDDO
 
+  !! Side 1
   DO jc = 1,myc
      DO l = 1,lratioy
         jfine = (jc-1)*lratioy + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
-              auxr(ma,jfine) = auxc1d(ma,index + jc)
+              auxc(ma,jfine) = auxc1d(ma,index + jc)
            ENDDO
         ENDIF
         DO mq = 1,meqn
-           qr(mq,jfine) = qc1d(mq,index + jc)
+           qc(mq,jfine) = qc1d(mq,index + jc)
         ENDDO
      ENDDO
   ENDDO
@@ -167,8 +150,9 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   idir = 0
   iface = 0
   CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
-                ql,qr,auxl,auxr,amdq,apdq)
+                qf,qc,auxf,auxc,amdq,apdq)
 
+  !! Side 1
   DO jc = 1,myc
      DO l = 1,lratioy
         jfine = (jc-1)*lratioy + l
@@ -180,14 +164,16 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDDO
   index  = myc
 
-  !! ------------------------------
-  !!  side 2 (iface = 4; top edge)
-  !! ------------------------------
+  !! ----------------------------------------------
+  !!  Side 2
+  !! ----------------------------------------------
+  !!
+  !! iface = 4 (top edge)
   !!
   !! Fine grid is on the left (bottom);  coarse grid is on the right (top)
   !!
-  !! auxl, ql : data for bottom edge of top (coarse) cell
-  !! auxr, qr : data for top edge of  bottom (fine) cell
+  !! auxf, qf : data for bottom (fine) cell
+  !! auxc, qc : data for top (coarse) cell
   !!
 
   IF (my .EQ. 1) THEN
@@ -199,46 +185,43 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDIF
 
 
+  !! Side 2
   DO i = 1,mx
      IF (maux .GT. 0) THEN
         DO ma = 1,maux
-           auxr(ma,i) = aux(ma,i,my+1)
+           auxf(ma,i) = aux(ma,i,my+1)
         ENDDO
      ENDIF
      DO mq = 1,meqn
-        qr(mq,i) = q(mq,i,my+1)
+        qf(mq,i) = q(mq,i,my+1)
      ENDDO
   ENDDO
 
+  !! Side 2
   DO ic = 1, mxc
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
         IF (maux .GT. 0) THEN
            DO  ma = 1,maux
               IF (auxtype(ma) .EQ. "yleft") THEN
-                 auxl(ma,ifine) = aux(ma,ifine,my+1)
+                 auxc(ma,ifine) = aux(ma,ifine,my+1)
               ELSE
-                 auxl(ma,ifine) = auxc1d(ma,index + ic)
+                 auxc(ma,ifine) = auxc1d(ma,index + ic)
               ENDIF
            ENDDO
         ENDIF
         DO  mq = 1,meqn
-           ql(mq,ifine) = qc1d(mq,index + ic)
+           qc(mq,ifine) = qc1d(mq,index + ic)
         ENDDO
      ENDDO
   ENDDO
 
-  !! side 2 (iface = 4  (top edge))
-  !! qf = qr
-  !! qc = ql
-
   idir = 1
   iface = 3
   CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &
-                qr,ql,auxr,auxl,amdq,apdq)
+                qf,qc,auxf,auxc,amdq,apdq)
 
-  !! we have the wave. for side 2. add into sdflxp
-
+  !! Side 2
   DO ic = 1,mxc
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
@@ -253,70 +236,80 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
 299 continue
 
 
-
-  !! --------
-  !!  side 3
-  !! --------
+  !! ----------------------------------------------
+  !!  Side 3
+  !! ----------------------------------------------
   !!
-  !! Right edge (note that right and bottom faces are ordered j = 1,mx)
+  !! iface = 1 (right edge)
+  !!
+  !! Fine grid is on the left;  coarse grid is on the right
+  !!
+  !! auxf, qf : data for left (fine) cell
+  !! auxc, qc : data for right (coarse) cell
+  !!
+
   DO j = 1, my
      IF (maux .GT. 0) THEN
         DO ma = 1,maux
-           auxr(ma,j) = aux(ma,mx+1,j)
+           auxf(ma,j) = aux(ma,mx+1,j)
         ENDDO
      ENDIF
      DO mq = 1, meqn
-        qr(mq,j) = q(mq,mx+1,j)
+        qf(mq,j) = q(mq,mx+1,j)
      ENDDO
   ENDDO
 
+  !! Side 3
   DO jc = 1,myc
      DO l = 1,lratioy
         jfine = (jc-1)*lratioy + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
               IF (auxtype(ma).EQ."xleft") THEN
-                 auxl(ma,jfine) = aux(ma,mx+1,jfine)
+                 auxc(ma,jfine) = aux(ma,mx+1,jfine)
               ELSE
-                 auxl(ma,jfine) = auxc1d(ma,index + jc)
+                 auxc(ma,jfine) = auxc1d(ma,index + jc)
               ENDIF
            ENDDO
         ENDIF
         DO mq = 1, meqn
-           ql(mq,jfine) = qc1d(mq,index + jc)
+           qc(mq,jfine) = qc1d(mq,index + jc)
         ENDDO
      ENDDO
   ENDDO
 
 
-  !! side 3 (iface = 1  (right edge;  fine grid is on the left))
-  !! qf = ql
-  !! qc = qr
-
   idir = 0
   iface = 1
   CALL rpn2_qad(my,meqn,maux,mbc, idir, iface, &
-                ql,qr,auxl,auxr,amdq,apdq)
+                qf,qc,auxf,auxc,amdq,apdq)
 
-
-  !!
-  !! we have the wave. for side 3 add into sdflxp
-  !!
+  !! Side 3
   DO jc = 1, myc
      DO l = 1, lratioy
         jfine = (jc-1)*lratioy + l
         DO mq = 1, meqn
            delta_fix = amdq(mq,jfine) + apdq(mq,jfine)
-           svdflx(mq,index + jc) = svdflx(mq,index + jc) - dy*dt*delta_fix
+           svdflx(mq,index + jc) = svdflx(mq,index + jc) + dy*dt*delta_fix
         ENDDO
      ENDDO
   ENDDO
   index  = index + myc
 
-  !! --------
-  !!  side 4
-  !! --------
+
+
+  !! ----------------------------------------------
+  !!  Side 4
+  !! ----------------------------------------------
+  !! 
+  !! iface = 2 (bottom edge)
   !!
+  !! Fine grid is on the top (right);  coarse grid is on the bottom (left)
+  !!
+  !! auxf, qf : data for  right (fine) cell
+  !! auxc, qc : data for left (coarse) cell
+  !!
+
   IF (my .EQ. 1) THEN
      !! # a single row of interior cells only happens when using the
      !! # 2d amrclaw code to do a 1d problem with refinement.
@@ -325,50 +318,45 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
      go to 499
   ENDIF
 
+  !! Side 4
   DO  i = 1, mx
      IF (maux .GT. 0) THEN
         !! Is this conditional needed?  Loop won't do anything if maux == 0
         DO ma = 1,maux
            IF (auxtype(ma) .EQ. "yleft") THEN
               !! But this left edge may not coincide with the coarse grid left edge              
-              auxl(ma,i) = aux(ma,i,1)
+              auxf(ma,i) = aux(ma,i,1)
            ELSE
-              auxl(ma,i) = aux(ma,i,0)
+              auxf(ma,i) = aux(ma,i,0)
            ENDIF
         ENDDO
      ENDIF
      DO mq = 1, meqn
-        ql(mq,i) = q(mq,i,0)
+        qf(mq,i) = q(mq,i,0)
      ENDDO
   ENDDO
 
+  !! Side 4
   DO ic = 1,mxc
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
         IF (maux .GT. 0) THEN
            DO ma = 1,maux
-              auxr(ma,ifine) = auxc1d(ma,index + ic)
+              auxc(ma,ifine) = auxc1d(ma,index + ic)
            ENDDO
         ENDIF
         DO  mq = 1, meqn
-           qr(mq,ifine) = qc1d(mq,index + ic)
+           qc(mq,ifine) = qc1d(mq,index + ic)
         ENDDO
      ENDDO
   ENDDO
 
-  !! side 4 (iface = 2  (right edge))
-  !! qf = ql
-  !! qc = qr  
-
   idir = 1
   iface = 2
   CALL rpn2_qad(mx,meqn,maux,mbc, idir, iface, &                
-                ql,qr,auxl,auxr,amdq,apdq)
+                qf,qc,auxf,auxc,amdq,apdq)
 
-
-  !!
-  !! we have the wave. for side 4. add into sdflxm
-  !!
+  !! Side 4
   DO ic = 1,mxc
      DO l = 1,lratiox
         ifine = (ic-1)*lratiox + l
@@ -388,4 +376,4 @@ SUBROUTINE qad(valbig,mitot,mjtot,nvar, &
   ENDIF
 
   RETURN
-END SUBROUTINE qad
+END SUBROUTINE qad_new2
