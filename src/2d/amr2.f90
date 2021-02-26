@@ -617,7 +617,8 @@ program amr2
 
     call outtre (mstart,printout,nvar,naux)
     write(outunit,*) "  original total mass ..."
-    call conck(1,nvar,naux,time,rest)
+    !!call conck(1,nvar,naux,time,rest)
+    call conck(4,nvar,naux,time,rest)
     if (output_t0) then
         call valout(1,lfine,time,nvar,naux)
     endif
